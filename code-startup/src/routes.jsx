@@ -1,21 +1,22 @@
-import Home from './pages/Home.jsx'
-import CodeChallenge from './pages/CodeChallenge'
-import DailyQ from './pages/DailyQ'
-import DiffProfile from './pages/DiffProfile'
-import DiffSolutionList from './pages/DiffQSolutionList'
-import DiffSolutionLook from './pages/DiffQSolutionLook'
-import Login from './pages/Login'
-import MakeFinished from './pages/MakeFinished'
-import MakeName from './pages/MakeName'
-import MakePassword from './pages/MakeIdPassworl'
-import MakeProfile from './pages/MakeProfile'
-import Mypage from './pages/MyPage'
-import NewLogin from './pages/NewLogin'
-import Qbank from './pages/Qbank'
-import Ranking from './pages/Ranking'
-import SolveQ from './pages/SolveQ'
-import UserQ from './pages/UserQ'
-import VulnerableQ from './pages/VulnerableQ'
+import Home from "./pages/Home/Home.jsx";
+import CodeChallenge from "./pages/CodeChallenge/CodeChallenge.jsx";
+import DailyQ from "./pages/DailyQ/DailyQ.jsx";
+import DiffProfile from "./pages/DiffProfile/DiffProfile.jsx";
+import DiffSolutionList from "./pages/DiffQSolutionList/DiffQSolutionList.jsx";
+import DiffSolutionLook from "./pages/DiffQSolutionLook/DiffQSolutionLook.jsx";
+import Login from "./pages/Login/Login.jsx";
+import MakeFinished from "./pages/MakeFinished/MakeFinished.jsx";
+import MakeName from "./pages/MakeName/MakeName.jsx";
+import MakeIdPassword from "./pages/MakeIdPassword/MakeIdPassword.jsx"; 
+import MakeProfile from "./pages/MakeProfile/MakeProfile.jsx";
+import Mypage from "./pages/MyPage/MyPage.jsx";
+import NewLogin from "./pages/NewLogin/NewLogin.jsx";
+import Qbank from "./pages/Qbank/Qbank.jsx";
+import Ranking from "./pages/Ranking/Ranking.jsx";
+import SolveQ from "./pages/SolveQ/SolveQ.jsx";
+import UserQ from "./pages/UserQ/UserQ.jsx";
+import VulnerableQ from "./pages/VulnerableQ/VulnerableQ.jsx";
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useState } from "react";
 

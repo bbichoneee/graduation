@@ -2,7 +2,7 @@ import { StrictMode } from 'react'           // React 대신 StrictMode만
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
-import "D:\\graduation\\code-startup\\src\\styles\\main.scss"
+import "./styles/main.scss";
 
 
 //bootstrap css & JS
