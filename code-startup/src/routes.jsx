@@ -49,7 +49,7 @@ const MyRoutes = () => {
             <Route path = "/login" element= {<Login onLogin={() => setIsLoggedIn(true)} /> } />
             <Route path = "/makefinished" element= {<MakeFinished/>} />
             <Route path = "/makename" element= {<MakeName/>} />
-            <Route path = "/makepassword" element= {<MakePassword/>} />
+            <Route path = "/makeidpassword" element= {<MakeIdPassword/>} />
             <Route path = "/newlogin" element= {<NewLogin/>} />
             <Route path = "/solveq" element= {<SolveQ/>} />
             <Route path = "/vulnerableq" element= {<VulnerableQ/>} />

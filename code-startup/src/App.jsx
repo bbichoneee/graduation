@@ -8,9 +8,9 @@ import { useState } from "react";
 function App() {
 
   return (
-    <>
+    <body>
       <MyRoutes/>
-    </>
+    </body>
   )
 }
 
