@@ -1,0 +1,27 @@
+@import './variables';  //bootstrap import 전에 선언하기!
+@import 'bootstrap/scss/bootstrap'; //bootstrap
+@import './overrides';
+@import url('https://fonts.googleapis.com/css2?family=Do+Hyeon&family=WDXL+Lubrifont+TC&display=swap');
+
+@font-face {
+    font-family: 'DnfBitbeatV2';
+    src: url('//cdn.df.nexon.com/img/common/font/DNFBitBitv2.otf')format('opentype');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Galmuri14';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2506-1@1.0/Galmuri14.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+}
+
+@import url('https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css');
+
+@font-face {
+    font-family: 'Galmuri11';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2506-1@1.0/Galmuri11-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+}
