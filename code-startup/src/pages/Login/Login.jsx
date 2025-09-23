@@ -8,18 +8,29 @@ const Login = () => {
     }
 
     return(
-        <div className="login-page">
-             {/* 왼쪽 이미지 영역 */}
-            <div className="login-image">
-                <img src="/img/loginpage.jpg" alt="로그인 이미지" />
-            </div>
+        <div className="login_page">
 
-            {/* 오른쪽 로그인 폼 영역 */}
+            {/* 로그인 폼 영역 */}
             <div className="login-form">
-                <h1 className="header-title">로그인</h1>
-                <button className="btn btn-primary" onClick={handleLogin}>
-                로그인
-                </button>
+                <img className = "main_logo" src = "./img/logo.png"/>
+                
+                <div className = "login_box">
+                    <h1 className="header-title">LOGIN</h1>
+                    <div className="id_box">
+                        <p>ID</p>
+                        <input type = "text" placeholder ="아이디를 입력하세요."></input>
+                    </div>
+                    <div className="pwd_box">
+                        <p>PASSWORD</p>
+                        <input type = "password" placeholder ="비밀번호를 입력하세요."></input>
+                    </div>
+                    <div className = "btn_container">
+                        <button className = "btn btn-light">회원가입</button>
+                        <button className="btn btn-primary" onClick={handleLogin}>
+                        로그인
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     ) ;
