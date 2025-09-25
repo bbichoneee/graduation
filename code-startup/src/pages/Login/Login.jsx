@@ -1,5 +1,7 @@
 //0.로그인 페이지
 import './Login.scss';
+import MyRoutes from '/src/routes.jsx';
+import { Link } from 'react-router-dom';
 
 const Login = () => {
     const handleLogin = () => {
@@ -25,7 +27,7 @@ const Login = () => {
                         <input type = "password" placeholder ="비밀번호를 입력하세요."></input>
                     </div>
                     <div className = "btn_container">
-                        <button className = "btn btn-light">회원가입</button>
+                        <Link to ="/newlogin" className = "btn btn-light">회원가입</Link>
                         <button className="btn btn-primary" onClick={handleLogin}>
                         로그인
                         </button>

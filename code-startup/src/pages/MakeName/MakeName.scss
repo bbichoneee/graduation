@@ -1,0 +1,28 @@
+@import "/src/styles/main.scss";
+
+.container {
+  display : grid;
+  grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: 1fr;
+  align-items: center;
+  justify-items : center;
+  height : 100vh;
+
+}
+
+.main_text {
+    margin-top: 2rem;
+  font-family: $font-newlogin;
+  font-size : 4rem;
+}
+
+
+.btn.custom_btn,.inp {
+    
+    font-family: $font-main;
+}
+
+.custom_input {
+  width: 50vw;      /* 화면 가로의 50% */
+  max-width: 600px; /* 너무 넓어지지 않도록 제한 (옵션) */
+}
