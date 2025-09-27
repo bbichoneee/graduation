@@ -13,10 +13,13 @@ const Login = () => {
         <div className="login_page">
 
             {/* 로그인 폼 영역 */}
+            
             <div className="login-form">
-                <img className = "main_logo" src = "./img/logo.png"/>
-                
-                <div className = "login_box">
+                <div className='main_logo_box'>
+                    <img className = "main_logo" src = "./img/logo.png"/>
+                </div>
+                <div className='login_container'>
+                    <div className = "login_box">
                     <h1 className="header-title">LOGIN</h1>
                     <div className="id_box">
                         <p>ID</p>
@@ -33,6 +36,8 @@ const Login = () => {
                         </button>
                     </div>
                 </div>
+                </div>
+                
             </div>
         </div>
     ) ;
