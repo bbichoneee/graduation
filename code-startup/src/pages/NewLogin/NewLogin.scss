@@ -17,8 +17,16 @@
 
 
 .btn.custom_btn {
-    
+    font-size : 1.5rem;
     font-family: $font-main;
+    display: inline-flex;          /* .btn 위에 덮어쓰기 */
+    align-items: center;           /* 세로 가운데 정렬 */
+    gap: 8px;                      /* 텍스트-아이콘 간격 */
 }
 
 
+.arrow{
+  height: 1em;                   /* 글자 크기 기준으로 자연스럽게 */
+  width: auto;
+  display: block;                /* 베이스라인 들뜸 방지 */
+}
