@@ -71,6 +71,10 @@
   font-family: $font-main;
 }
 
+.help_text{
+  font-size: 0.8rem;
+}
+
 @media (max-width: 480px) {
   .profile-uploader .pu-dropzone { --size: 128px; }
 }
