@@ -75,6 +75,64 @@
   font-size: 0.8rem;
 }
 
+/* 툴팁이 버튼 밖으로 나가도 보이도록 (부모 카드가 자르고 있으면 보정) */
+.input_card { overflow: visible; }
+
+/* 버튼을 툴팁 기준점으로 */
+.next_btn {
+  position: relative;
+  display: inline-flex;    /* 아이콘/텍스트 정렬 유지 */
+  align-items: center;
+  gap: 8px;
+}
+
+/* 말풍선(문구) */
+.next_btn::after {
+  content: attr(data-hint);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px);          /* 버튼 오른쪽 옆으로 */
+  transform: translateY(-50%) translateX(4px);
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #fff;
+  background: rgba(17, 24, 39, 0.95); /* 어두운 말풍선 */
+  padding: 6px 8px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+  z-index: 20;
+}
+
+/* 꼬리(삼각형) */
+.next_btn::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%) translateX(2px);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent rgba(17,24,39,0.95);
+  opacity: 0;
+  transition: opacity .15s ease, transform .15s ease;
+  z-index: 19;
+}
+
+/* 보여줄 타이밍: hover + 키보드 포커스 접근성 */
+.next_btn:hover::after,
+.next_btn:hover::before,
+.next_btn:focus-visible::after,
+.next_btn:focus-visible::before {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+
+
 @media (max-width: 480px) {
   .profile-uploader .pu-dropzone { --size: 128px; }
 }
