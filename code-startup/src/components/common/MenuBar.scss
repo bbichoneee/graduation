@@ -1,0 +1,93 @@
+@import "/src/styles/main.scss";
+
+
+.csu-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgb(225, 223, 223);
+    color: rgb(0, 0, 0);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    font-family: $font-head;
+    border : 5px solid black;
+    border-radius : 10px;
+    margin : 2vh 1vw;
+}
+.csu-nav__inner {
+    max-width: 1200px;
+    margin: 0 ;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    position: relative; /* 진행바를 이 컨테이너에 절대배치 */
+    overflow: hidden;   /* 진행바가 바깥으로 새지 않게 */
+    border-radius: 5px;
+}
+
+/* 하나의 긴 체력바 (뒤 레이어) */
+.csu-nav__progress {
+    position: absolute;
+    inset: 0;
+    width: var(--progress-px, 0px); /* px 기반으로 정확히 제어 */
+    background: linear-gradient(90deg, var(--fill-color-start), var(--fill-color-end));
+    transition: width var(--fill-duration, 600ms) ease;
+    z-index: 0; /* 메뉴보다 뒤 */
+}
+
+.csu-nav__logo {
+     position: relative; z-index: 1;
+     padding-left: 10px;
+}
+.csu-nav__logo img { height: 50px; display: block; }
+
+.csu-nav__menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    position: relative;
+    z-index: 1; /* 진행바 위 */
+}
+.csu-nav__item {
+    --radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    transition: transform 120ms ease, background 160ms ease;
+    background: transparent; /* 아이템 배경은 투명 → 뒤 진행바가 보임 */
+}
+.csu-nav__item:hover { transform: translateY(-1px); }
+.csu-nav__item:focus-visible {
+    text-shadow: 1px 2px 0 rgb(131, 0, 0, 0.5);
+}
+.csu-nav__item.is-active { filter: saturate(1.1); }
+
+.csu-nav__label {
+    font-weight: 700;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+    font-size : 1.2rem;
+}
+
+/* 클릭한 메뉴 포함, 그 이전 메뉴들에 그림자 적용 */
+.csu-nav__item.is-filled .csu-nav__label {
+  text-shadow: 1px 2px 0 rgba(131, 0, 0, 0.5);
+}
+
+.csu-nav__label {
+  transition: text-shadow 200ms ease;
+}
+
+/* 작은 화면 대응 */
+@media (max-width: 720px) {
+    .csu-nav__inner { padding: 8px 12px; gap: 10px; }
+    .csu-nav__menu { gap: 6px; }
+    .csu-nav__item { padding: 8px 10px; border-radius: 10px; }
+    .csu-nav__label { font-size: 0.9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .csu-nav__progress, .csu-nav__item { transition: none !important; }
+}
