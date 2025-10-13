@@ -27,7 +27,7 @@ function ProtectedRoute({ isLoggedIn , children }) {
 }
 
 const MyRoutes = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(true);
 
     return (
         <Routes>
@@ -51,7 +51,7 @@ const MyRoutes = () => {
             <Route path = "/makeidpassword" element= {<MakeIdPassword/>} />
             <Route path = "/makeprofile" element= {<MakeProfile/>} />
             <Route path = "/newlogin" element= {<NewLogin/>} />
-            <Route path = "/solveq" element= {<SolveQ/>} />
+            <Route path = "/solveq/:id" element= {<SolveQ/>} />
             <Route path = "/vulnerableq" element= {<VulnerableQ/>} />
             <Route path="*" element={<div>404 Not Found</div>} /> {/* 안전망 */}
         </Routes>

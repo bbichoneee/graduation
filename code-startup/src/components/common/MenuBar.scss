@@ -1,5 +1,14 @@
 @import "/src/styles/main.scss";
 
+.csu-nav__menu a.csu-nav__item,
+.csu-nav__menu a.csu-nav__item:link,
+.csu-nav__menu a.csu-nav__item:visited,
+.csu-nav__menu a.csu-nav__item:hover,
+.csu-nav__menu a.csu-nav__item:active,
+.csu-nav__menu a.csu-nav__item:focus {
+  color: inherit;
+  text-decoration: none;
+}
 
 .csu-nav {
     position: sticky;
@@ -10,7 +19,7 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     font-family: $font-head;
     border : 5px solid black;
-    border-radius : 10px;
+    border-radius : 20px;
     margin : 2vh 1vw;
 }
 .csu-nav__inner {
@@ -22,7 +31,7 @@
     padding: 10px 16px;
     position: relative; /* 진행바를 이 컨테이너에 절대배치 */
     overflow: hidden;   /* 진행바가 바깥으로 새지 않게 */
-    border-radius: 5px;
+    border-radius: 15px;
 }
 
 /* 하나의 긴 체력바 (뒤 레이어) */
@@ -69,6 +78,8 @@
     letter-spacing: 0.1px;
     white-space: nowrap;
     font-size : 1.2rem;
+    color : inherit;
+    text-decoration: none;
 }
 
 /* 클릭한 메뉴 포함, 그 이전 메뉴들에 그림자 적용 */

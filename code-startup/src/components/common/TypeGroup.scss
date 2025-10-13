@@ -1,0 +1,128 @@
+/* src/components/qbank/TypeGroup.scss */
+
+/* ===== 컨테이너 ===== */
+.type-group {
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  border: 1px solid var(--tg-border, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--tg-bg, #fff);
+}
+
+/* 기본 summary 마커 제거 */
+.type-group summary::-webkit-details-marker { display: none; }
+
+/* ===== 요약(토글) 헤더 ===== */
+.type-group .type-summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  padding: .875rem 1rem;
+
+  /* 부트스트랩 유틸이 있어도 여기서 강제 */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+
+  background: var(--tg-head-bg, #fafafb);
+  border-bottom: 1px solid var(--tg-border, #e5e7eb);
+  color: var(--tg-head-fg, #111827);
+}
+
+/* 헤더 타이틀/아이콘 */
+.type-group .type-summary .chevron {
+  display: inline-block;
+  transition: transform .2s ease;
+  transform-origin: 50% 50%;
+  color: var(--tg-chevron, #6b7280);
+  margin-left: .5rem;
+  font-size: 12px;
+}
+
+/* open 상태에서 회전 */
+.type-group[open] .type-summary .chevron {
+  transform: rotate(90deg);
+}
+
+
+
+/* ===== 리스트 래퍼(UL) – 왼쪽 고정 & 전체폭 ===== */
+.type-group .list-group {
+  width: 100%;
+  display: block;      /* 부모가 flex/grid여도 왼쪽 정렬 유지 */
+  margin: 0;
+  padding: 0;
+  list-style: none;    /* 불릿 제거 */
+  text-align: left;
+  border: 0;
+}
+
+/* list-group-flush의 좌우/바깥 테두리 제거 효과를 자체적으로 반영 */
+.type-group .list-group.list-group-flush {
+  border: 0;
+}
+
+/* 각 항목(LI) – 부트스트랩 기본 여백/테두리 정리
+   (실제 그리드 배치는 ProblemListItem.scss의 .problem-row/.problem-cell에서 수행) */
+.type-group .list-group > .list-group-item {
+  padding: 0;                   /* 내부 컴포넌트가 자체 패딩 가짐 */
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  border-bottom: 1px solid var(--tg-border, #e5e7eb);
+  background: transparent;
+}
+
+.type-group .list-group > .list-group-item:last-child {
+  border-bottom: 0;             /* 마지막 구분선 제거(선택) */
+}
+
+/* Hover 시 행 전체에 여백색 */
+.type-group .list-group > .list-group-item:hover {
+  background: var(--tg-row-hover, #f7f7f9);
+}
+
+/* 빈 상태 */
+.type-group .empty {
+  padding: 1rem 0;
+  color: rgba(0,0,0,.55);
+  text-align: center;
+}
+
+/* 1) .type-group을 감싸고 있는 바깥 li가 항상 전체폭을 차지하도록 */
+.list-group > .list-group-item.p-0:has(> .type-group) {
+  width: 100%;
+  flex: 1 1 100%;
+  align-self: stretch;    /* 부모가 flex여도 가로로 꽉 채움 */
+  margin: 0;
+  padding: 0;             /* 이미 p-0이지만 확실히 */
+  border: 0;              /* 필요 시 */
+}
+
+/* 2) .type-group 자체도 전체폭 사용 */
+.type-group {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+
+/* 3) 내부 리스트 래퍼도 왼쪽 고정 & 전체폭 */
+.type-group .list-group {
+  width: 100%;
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  border: 0;
+}
+
+/* 4) 각 아이템(LI) 기본 여백/테두리 정리 (행 자체는 ProblemListItem.scss의 grid가 그려줌) */
+.type-group .list-group > .list-group-item {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}

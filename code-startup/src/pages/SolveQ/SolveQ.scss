@@ -1,0 +1,21 @@
+@import "/src/styles/main.scss";
+
+.card > .card-header {
+  padding: .25rem .5rem;
+  overflow: hidden;
+  border-top-left-radius: .5rem;
+  border-top-right-radius: .5rem;
+}
+.card-header .nav-tabs {
+  margin: -.25rem -.5rem -1px;  /* 패딩만큼 음수로 당겨 경계 맞춤 */
+}
+
+.two_container{
+  display : grid;
+  grid-template-rows: auto;
+  grid-template-columns: 1fr 1fr;
+  padding : 10px 0;
+  border-bottom: 1px solid rgb(201, 201, 201);
+}
+
+
