@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3306/code_startup?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: root
+    password: dhwldbs15@@  # 본인 MariaDB 비밀번호
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MariaDBDialect
+
+# Judge0 설정 (나중에 추가)
+judge0:
+  api-url: https://ce.judge0.com
+  api-key: ""
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.csu: debug
