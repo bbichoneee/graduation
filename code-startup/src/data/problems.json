@@ -203,7 +203,176 @@
     "uppoint": 30,
     "level": 3,
     "tags": ["13. 다차원 배열", "c"]
+  },
+  {
+    "id": 131,
+    "title": "포인터로 값 교환하기",
+    "description": "두 정수를 입력받아 포인터를 이용해 두 변수의 값을 교환하는 프로그램을 작성하시오.",
+    "input": "첫째 줄에 두 정수 A와 B가 주어진다. (-100 ≤ A, B ≤ 100)",
+    "output": "포인터를 이용해 두 값을 교환한 후, A와 B를 순서대로 출력한다.",
+    "testCases": [
+      { "inputData": "3 7", "expectedOutput": "7 3", "isSample": true },
+      { "inputData": "-2 5", "expectedOutput": "5 -2", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["14.포인터 기초","c"]
+  },
+  {
+    "id": 141,
+    "title": "배열과 포인터의 합계 구하기",
+    "description": "정수 N개를 입력받아 포인터 연산을 이용해 모든 원소의 합을 구하는 프로그램을 작성하시오.",
+    "input": "첫째 줄에 정수의 개수 N(1 ≤ N ≤ 100)\n둘째 줄에 N개의 정수가 주어진다.",
+    "output": "배열의 모든 원소의 합을 출력한다.",
+    "testCases": [
+      { "inputData": "5\n1 2 3 4 5", "expectedOutput": "15", "isSample": true },
+      { "inputData": "3\n10 20 30", "expectedOutput": "60", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["15.배열과 포인터 관계","c"]
+  },
+  {
+    "id": 151,
+    "title": "동적 메모리로 평균 구하기",
+    "description": "malloc 함수를 이용해 N개의 정수를 저장하고 평균을 구하는 프로그램을 작성하시오.",
+    "input": "첫째 줄에 정수 N(1 ≤ N ≤ 100)\n둘째 줄에 N개의 정수가 주어진다.",
+    "output": "입력된 정수의 평균을 소수 둘째 자리까지 출력한다.",
+    "testCases": [
+      { "inputData": "5\n1 2 3 4 5", "expectedOutput": "3.00", "isSample": true },
+      { "inputData": "3\n10 20 25", "expectedOutput": "18.33", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["16.malloc/free 활용","c"]
+  },
+  {
+    "id": 161,
+    "title": "이중 포인터로 문자열 수정하기",
+    "description": "문자열 포인터를 가리키는 이중 포인터를 이용해 주어진 문자열의 첫 글자를 대문자로 변경하는 프로그램을 작성하시오.",
+    "input": "하나의 문자열 S가 주어진다. (길이 ≤ 100)",
+    "output": "첫 글자가 대문자로 바뀐 문자열을 출력한다.",
+    "testCases": [
+      { "inputData": "hello", "expectedOutput": "Hello", "isSample": true },
+      { "inputData": "apple", "expectedOutput": "Apple", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["17.응용 포인터(이중 포인터, 함수 포인터)","c"]
+  },
+  {
+    "id": 171,
+    "title": "문자 개수 세기",
+    "description": "문자열을 입력받아 문자 ‘a’의 개수를 출력하는 프로그램을 작성하시오.",
+    "input": "하나의 문자열 S가 주어진다. (길이 ≤ 100)",
+    "output": "문자 'a'의 개수를 출력한다.",
+    "testCases": [
+      { "inputData": "banana", "expectedOutput": "3", "isSample": true },
+      { "inputData": "apple", "expectedOutput": "1", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["18.문자 입출력 함수","c"]
+  },
+  {
+    "id": 181,
+    "title": "포인터로 문자열 길이 구하기",
+    "description": "포인터를 이용해 문자열의 길이를 구하는 프로그램을 작성하시오.",
+    "input": "하나의 문자열 S가 주어진다. (길이 ≤ 100)",
+    "output": "문자열의 길이를 출력한다.",
+    "testCases": [
+      { "inputData": "hello", "expectedOutput": "5", "isSample": true },
+      { "inputData": "computer", "expectedOutput": "8", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["19. 문자열과 포인터","c"]
+  },
+  {
+    "id": 191,
+    "title": "문자열 붙이기",
+    "description": "두 문자열을 입력받아 strcat 함수를 이용해 이어 붙인 결과를 출력하는 프로그램을 작성하시오.",
+    "input": "첫째 줄에 문자열 A, 둘째 줄에 문자열 B가 주어진다. (각각 길이 ≤ 50)",
+    "output": "A와 B를 이어 붙인 문자열을 출력한다.",
+    "testCases": [
+      { "inputData": "Hello\nWorld", "expectedOutput": "HelloWorld", "isSample": true },
+      { "inputData": "Data\nBase", "expectedOutput": "DataBase", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["20.문자열 연산 함수","c"  ]
+  },
+  {
+    "id": 201,
+    "title": "학생 구조체 출력하기",
+    "description": "이름과 나이를 저장하는 구조체 Student를 정의하고, 입력받은 값을 구조체 변수에 저장한 후 출력하는 프로그램을 작성하시오.",
+    "input": "이름과 나이가 공백으로 구분되어 주어진다. (이름 길이 ≤ 20, 0 < 나이 < 150)",
+    "output": "Student 구조체의 이름과 나이를 다음 형식으로 출력한다.\n이름: [이름], 나이: [나이]",
+    "testCases": [
+      { "inputData": "Jiyun 23", "expectedOutput": "이름: Jiyun, 나이: 23", "isSample": true },
+      { "inputData": "Minho 19", "expectedOutput": "이름: Minho, 나이: 19", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["21.구조체 활용","c"]
+  },
+  {
+    "id": 211,
+    "title": "typedef와 enum 사용하기",
+    "description": "typedef로 새 정수형 Score를 정의하고, enum을 사용해 A, B, C, D, F를 90, 80, 70, 60, 0으로 매칭하여 입력받은 점수에 해당하는 학점을 출력하는 프로그램을 작성하시오.",
+    "input": "정수형 점수 하나가 주어진다. (0 ≤ score ≤ 100)",
+    "output": "점수에 해당하는 학점을 출력한다.",
+    "testCases": [
+      { "inputData": "95", "expectedOutput": "A", "isSample": true },
+      { "inputData": "75", "expectedOutput": "C", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["22.typedef,enum","c"]
+  },
+  {
+    "id": 221,
+    "title": "구조체 배열로 학생 평균 구하기",
+    "description": "학생 이름과 점수를 구조체 배열로 입력받아 전체 평균 점수를 구하는 프로그램을 작성하시오.",
+    "input": "첫째 줄에 학생 수 N(1 ≤ N ≤ 100)\n이후 N줄에 이름과 점수가 주어진다.",
+    "output": "모든 학생의 평균 점수를 소수 둘째 자리까지 출력한다.",
+    "testCases": [
+      { "inputData": "3\nJiyun 90\nMinho 80\nGyubin 100", "expectedOutput": "90.00", "isSample": true },
+      { "inputData": "2\nA 70\nB 80", "expectedOutput": "75.00", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["23.구조체 배열 관리","c"]
+  },
+  {
+    "id": 231,
+    "title": "파일에 문자열 쓰기",
+    "description": "입력받은 문자열을 텍스트 파일 output.txt에 저장하는 프로그램을 작성하시오.",
+    "input": "하나의 문자열 S가 주어진다. (길이 ≤ 100)",
+    "output": "문자열이 output.txt에 저장되었음을 알리는 메시지를 출력한다.\n(예: '파일 저장 완료')",
+    "testCases": [
+      { "inputData": "Hello File", "expectedOutput": "파일 저장 완료", "isSample": true },
+      { "inputData": "CSU Project", "expectedOutput": "파일 저장 완료", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["24. 텍스트 파일 읽기/쓰기","c"]
+  },
+  {
+    "id": 241,
+    "title": "바이너리 파일로 정수 저장 및 읽기",
+    "description": "정수 N개를 입력받아 'data.bin' 파일에 이진(binary) 형태로 저장하고, 다시 읽어서 합을 출력하는 프로그램을 작성하시오.",
+    "input": "첫째 줄에 정수의 개수 N(1 ≤ N ≤ 100)\n둘째 줄에 N개의 정수가 주어진다.",
+    "output": "파일에서 읽은 정수들의 합을 출력한다.",
+    "testCases": [
+      { "inputData": "5\n1 2 3 4 5", "expectedOutput": "15", "isSample": true },
+      { "inputData": "3\n10 20 30", "expectedOutput": "60", "isSample": false }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["25. 바이너리 파일 처리","c"]
   }
+
 ]
 
 
