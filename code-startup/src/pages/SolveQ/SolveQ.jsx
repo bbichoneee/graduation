@@ -21,6 +21,8 @@ export default function SolveQ() {
   );
 
   const [tab, setTab] = useState("submit"); // submit | others
+  const [code, setCode] = useState("");
+  const [result, setResult] = useState(null); // 채점 결과 객체
   const [lang, setLang] = useState("c");
   const [sharePublic, setSharePublic] = useState(false);
 
@@ -158,6 +160,20 @@ return 0;
                       onClick={() => setTab("others")}
                     >
                       <span className="tab-label">다른사람 풀이</span>
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      type="button"
+                      className={`nav-link ${tab === "result" ? "active" : ""}`}
+                      onClick={() => setTab("result")}
+                      role="tab"
+                      aria-selected={tab === "result"}
+                    >
+                      <span className="tab-label">채점 결과</span>
+                      {result?.status === "done" && (
+                        <span className="badge bg-secondary ms-2">{result.summary?.passed}/{result.summary?.total}</span>
+                      )}
                     </button>
                   </li>
                 </ul>
