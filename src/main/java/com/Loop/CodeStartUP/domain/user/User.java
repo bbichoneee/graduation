@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.*;
 
+
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -55,6 +57,7 @@ public class User extends SoftDeletableEntity implements UserDetails {
 
     //@OneToMany(mappedBy = "user")
     //private List<DailyProblemAssignment> assignments = new ArrayList<>();
+        
 
     @Builder
     public User(String username, String nickname, String password, String profileImageUrl) {

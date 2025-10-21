@@ -112,7 +112,7 @@ const statusClass = (s) => {
         <div className="row g-3 mb-3 ">
           {/* 문제 설명 */}
           <div className="col-12">
-            <div className="card">
+            <div className="card solve-card">
               <h3 className="m-3">#{problem.id}. {problem.title}</h3>
               <div className="card-body">
                 <p className="mb-2">{problem.description}</p>

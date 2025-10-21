@@ -3,10 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
+   "scripts": {
+    "dev": "cross-env SASS_QUIET_DEPS=true vite",
+    "build": "cross-env SASS_QUIET_DEPS=true vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -28,6 +27,7 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",

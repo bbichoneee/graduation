@@ -1,0 +1,21 @@
+@import "/src/styles/main.scss";
+
+.card_profile{
+  display : flex;
+  padding : 10px;
+  gap : 10px;
+}
+
+img {
+  width : 100px;
+}
+
+.user-card {
+  font-family: $font-main;
+  font-size : 20px;
+  width : 30vw;
+  min-width: 200px;
+  max-width : 400px;
+  margin-left: 1vw;
+}
+
