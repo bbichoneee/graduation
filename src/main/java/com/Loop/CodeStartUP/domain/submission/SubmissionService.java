@@ -7,6 +7,7 @@ import com.Loop.CodeStartUP.enums.SubmissionResult;
 import com.Loop.CodeStartUP.external.Judge0Client;
 import com.Loop.CodeStartUP.external.judge0.dto.Judge0SubmitRequest;
 import com.Loop.CodeStartUP.external.judge0.dto.Judge0SubmitResponse;
+import com.Loop.CodeStartUP.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class SubmissionService {
 
     /** 코드 제출 및 채점 */
     @Transactional
-    public Submission submit(Long problemId, String code, String language) {
+    public Submission submit(Long problemId, String code, String language, User user) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다."));
 
@@ -36,12 +37,12 @@ public class SubmissionService {
                 .language(language)
                 .build();
 
+        submission.setUser(user);
         submissionRepository.save(submission);
         submission.startJudging();
 
         try {
             SubmissionResult result = judgeWithJudge0(problem, code);
-            // time/memory도 Judge0 응답 사용하려면 DTO 추가로 받아서 넣으면 됨
             submission.updateResult(result, 0.1, 1024L);
         } catch (Exception e) {
             log.error("❌ 채점 중 오류 발생", e);
@@ -60,25 +61,20 @@ public class SubmissionService {
         }
 
         TestCase testCase = testCases.get(0);
-
-        // ✅ Judge0 요청 만들기 (C: 50)
         Judge0SubmitRequest req = new Judge0SubmitRequest();
         req.setLanguageId(50);
         req.setSourceCode(code);
 
-        // ✅ stdin 보정 (scanf EOF 방지)
         String stdin = testCase.getInputData();
         if (stdin == null) stdin = "";
         if (!stdin.endsWith("\n")) stdin += "\n";
         req.setStdin(stdin);
 
-        // ✅ expected_output 보정 (개행까지 일치)
         String expected = testCase.getExpectedOutput();
         if (expected == null) expected = "";
         if (!expected.endsWith("\n")) expected += "\n";
         req.setExpectedOutput(expected);
 
-        // ✅ Judge0 호출
         Judge0SubmitResponse res = judge0Client.submitAndWait(req);
 
         if (res == null || res.getStatus() == null) {
@@ -93,8 +89,6 @@ public class SubmissionService {
             return SubmissionResult.COMPILE_ERROR;
         }
 
-
-
         Integer statusId = res.getStatus().getId();
         log.info("✅ Judge0 status.id={}, desc={}, stdout='{}', stderr='{}', ce='{}'",
                 statusId,
@@ -104,19 +98,17 @@ public class SubmissionService {
         return mapJudge0StatusToResult(statusId);
     }
 
-    /** Judge0 상태 ID → SubmissionResult 매핑 */
     private SubmissionResult mapJudge0StatusToResult(Integer statusId) {
         return switch (statusId) {
-            case 3 -> SubmissionResult.SUCCESS;        // Accepted
-            case 4 -> SubmissionResult.FAIL;           // Wrong Answer
-            case 5 -> SubmissionResult.TIMEOUT;        // Time Limit Exceeded
-            case 6 -> SubmissionResult.COMPILE_ERROR;  // Compilation Error
-            case 7, 8, 9, 10, 11, 12 -> SubmissionResult.RUNTIME_ERROR; // Runtime Error 계열
+            case 3 -> SubmissionResult.SUCCESS;
+            case 4 -> SubmissionResult.FAIL;
+            case 5 -> SubmissionResult.TIMEOUT;
+            case 6 -> SubmissionResult.COMPILE_ERROR;
+            case 7, 8, 9, 10, 11, 12 -> SubmissionResult.RUNTIME_ERROR;
             default -> SubmissionResult.RUNTIME_ERROR;
         };
     }
 
-    /** 제출 단건 조회 */
     public Submission getSubmission(Long submissionId) {
         return submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("제출을 찾을 수 없습니다."));

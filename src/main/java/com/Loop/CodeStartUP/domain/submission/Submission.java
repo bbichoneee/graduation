@@ -1,8 +1,9 @@
 package com.Loop.CodeStartUP.domain.submission;
 
-import com.Loop.CodeStartUP.domain.common.BaseEntity; // ✅ 경로 수정
+import com.Loop.CodeStartUP.domain.common.BaseEntity;
 import com.Loop.CodeStartUP.domain.problem.Problem;
-import com.Loop.CodeStartUP.enums.SubmissionResult;   // ✅ 경로 수정
+import com.Loop.CodeStartUP.enums.SubmissionResult;
+import com.Loop.CodeStartUP.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -31,6 +32,10 @@ public class Submission extends BaseEntity {
     @JoinColumn(name = "problem_id", nullable = false)
     private Problem problem;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(columnDefinition = "TEXT", nullable = false)
     private String code;
 
@@ -47,12 +52,14 @@ public class Submission extends BaseEntity {
     @Column(nullable = false, length = 50)
     private String language;
 
+    // ✅ Builder에 user까지 포함시킴
     @Builder
-    public Submission(Problem problem, String code, String language) {
+    public Submission(Problem problem, String code, String language, User user) {
         validateSubmission(problem, code, language);
         this.problem = problem;
         this.code = code;
         this.language = language;
+        this.user = user; // ✅ 여기가 핵심
         this.result = SubmissionResult.PENDING;
     }
 
@@ -101,5 +108,9 @@ public class Submission extends BaseEntity {
         if (problem == null) throw new IllegalArgumentException("문제는 필수입니다.");
         if (code == null || code.trim().isEmpty()) throw new IllegalArgumentException("코드는 필수입니다.");
         if (language == null || language.trim().isEmpty()) throw new IllegalArgumentException("언어는 필수입니다.");
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }
