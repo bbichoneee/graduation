@@ -11,6 +11,7 @@ const UserCard = () => {
     totalPoints: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -23,8 +24,8 @@ const UserCard = () => {
           profileImageUrl: me?.profileImageUrl || DEFAULT_AVATAR,
           totalPoints: Number.isFinite(me?.totalPoints) ? me.totalPoints : 0,
         });
-      } catch {
-        // 실패 시 목업 유지
+      } catch (e){
+        if (alive) setError("유저 정보를 불러오지 못했어요.");
       } finally {
         if (alive) setLoading(false);
       }

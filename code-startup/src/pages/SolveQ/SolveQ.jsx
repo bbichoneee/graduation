@@ -1,5 +1,5 @@
 // src/pages/SolveQ.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./SolveQ.scss";
 import MenuBar from "../../components/common/MenuBar";
@@ -7,9 +7,10 @@ import TimeLimitBadge from "../Qbank/TimeLimitBadge";
 import AnswerRate from "../Qbank/AnswerRate";
 import useSolveTimer from "../../components/hooks/useSolveTimer";
 import CodeEditor from "../../components/utility/CodeEditor";
-import { fetchProblemById } from '../../api/problems';
-import { submitSolution } from '../../api/submission';
+import { fetchProblemById } from "../../api/problems";
+import { submitSolution } from "../../api/submission";
 import useProblemStats from "../../components/hooks/useProblemStats";
+import { markSolvedToday } from "../../lib/dailyProgress";
 
 export default function SolveQ() {
   const { id } = useParams();
@@ -24,6 +25,9 @@ export default function SolveQ() {
 
   const [submission, setSubmission] = useState(null); // 서버에서 받은 채점 결과
   const { formatted, recordSubmit } = useSolveTimer();
+
+  // ✅ 정답 처리 중복 방지용 플래그
+  const solvedMarkedRef = useRef(false);
 
   const [source, setSource] = useState(
 `#include <stdio.h>
@@ -47,6 +51,16 @@ int main(void){
     return () => { alive = false; };
   }, [pid]);
 
+  // ✅ 정답(SUCCESS) 되자마자 하루 진도 기록 (한 번만)
+  useEffect(() => {
+    const r = String(submission?.result || "").toUpperCase();
+    if (!problem) return;
+    if (!solvedMarkedRef.current && r === "SUCCESS") {
+      markSolvedToday(problem.id);
+      solvedMarkedRef.current = true;
+    }
+  }, [submission?.result, problem]);
+
   // 제출(동기 결과 반환) — 언어는 C로 고정
   const handleSubmit = async () => {
     try {
@@ -54,15 +68,17 @@ int main(void){
       const created = await submitSolution({
         problemId: pid,
         code: source,
-        language: 'c',   // ✅ 고정
+        language: "c", // ✅ 고정
         usedMs,
         sharePublic,
-        testCases : problem.testCases
+        testCases: problem.testCases,
       });
       setSubmission(created);
       setTab("result");
+      // ⚠️ 굳이 여기서 markSolvedToday를 바로 호출하지 않습니다.
+      // 위 useEffect가 SUCCESS 전환을 감지해 딱 한 번만 기록합니다.
     } catch (e) {
-      alert('제출 실패: ' + (e.response?.data?.message || e.message));
+      alert("제출 실패: " + (e.response?.data?.message || e.message));
     }
   };
 
@@ -73,33 +89,33 @@ int main(void){
   const execMs  = submission?.executionTimeMs ?? null;
   const memKb   = submission?.memoryUsageKb ?? null;
 
-const resultLabel = (r) => {
-  const key = String(r || "").toUpperCase();
-  switch (key) {
-    case "SUCCESS": return "정답";
-    case "FAIL": return "오답";
-    case "COMPILE_ERROR": return "컴파일 오류";
-    case "RUNTIME_ERROR": return "런타임 오류";
-    case "TIMEOUT": return "시간 초과";
-    case "MEMORY_EXCEEDED": return "메모리 초과";
-    case "PENDING": return "대기 중";
-    case "JUDGING": return "채점 중";
-    default: return key || "-";
-  }
-};
+  const resultLabel = (r) => {
+    const key = String(r || "").toUpperCase();
+    switch (key) {
+      case "SUCCESS": return "정답";
+      case "FAIL": return "오답";
+      case "COMPILE_ERROR": return "컴파일 오류";
+      case "RUNTIME_ERROR": return "런타임 오류";
+      case "TIMEOUT": return "시간 초과";
+      case "MEMORY_EXCEEDED": return "메모리 초과";
+      case "PENDING": return "대기 중";
+      case "JUDGING": return "채점 중";
+      default: return key || "-";
+    }
+  };
 
-// (기존에 있던 statusClass 유지 or 살짝 보강)
-const statusClass = (s) => {
-  const up = String(s || "").toUpperCase();
-  if (up === "SUCCESS") return "bg-success";
-  if (up === "FAIL") return "bg-danger";
-  if (up === "COMPILE_ERROR") return "bg-warning text-dark";
-  if (up === "RUNTIME_ERROR") return "bg-warning text-dark";
-  if (up === "TIMEOUT") return "bg-warning text-dark";
-  if (up === "MEMORY_EXCEEDED") return "bg-warning text-dark";
-  if (up === "PENDING" || up === "JUDGING") return "bg-info text-dark";
-  return "bg-secondary";
-};
+  // (기존에 있던 statusClass 유지 or 살짝 보강)
+  const statusClass = (s) => {
+    const up = String(s || "").toUpperCase();
+    if (up === "SUCCESS") return "bg-success";
+    if (up === "FAIL") return "bg-danger";
+    if (up === "COMPILE_ERROR") return "bg-warning text-dark";
+    if (up === "RUNTIME_ERROR") return "bg-warning text-dark";
+    if (up === "TIMEOUT") return "bg-warning text-dark";
+    if (up === "MEMORY_EXCEEDED") return "bg-warning text-dark";
+    if (up === "PENDING" || up === "JUDGING") return "bg-info text-dark";
+    return "bg-secondary";
+  };
 
   return (
     <div>
@@ -245,19 +261,14 @@ const statusClass = (s) => {
                           <span className={`badge ${statusClass(submission.result)}`}>
                             {resultLabel(submission.result)}
                           </span>
-                          {/* 영문 enum 그대로도 옆에 작게 보여주고 싶으면: */}
                           <span className="text-muted small">({String(submission.result)})</span>
                         </div>
 
-                        {/* 오류 유형별 간단 가이드 (백엔드 변경 없이 프런트에서 메시지만) */}
                         {(() => {
                           if (!submission?.result) return null;
                           const r = String(submission.result).trim().toUpperCase();
-
-                          // SUCCESS는 안내문 필요 없으면 즉시 종료
                           if (r === "SUCCESS") return null;
 
-                          // 결과별 안내 메시지
                           const msgMap = {
                             FAIL: "오답입니다. 입출력 형식(개행/공백)과 예외 케이스를 다시 확인해 보세요.",
                             COMPILE_ERROR: "컴파일 오류입니다. 문법/헤더/세미콜론, 함수 시그니처를 확인하세요.",
@@ -269,10 +280,10 @@ const statusClass = (s) => {
                           };
 
                           const text = msgMap[r] ?? `결과: ${r}`;
-                          // 색상은 에러 계열이면 warning, 그 외 info
-                          const cls = (r === "FAIL" || r.endsWith("ERROR") || r === "TIMEOUT" || r === "MEMORY_EXCEEDED")
-                            ? "alert alert-warning py-2"
-                            : "alert alert-info py-2";
+                          const cls =
+                            r === "FAIL" || r.endsWith("ERROR") || r === "TIMEOUT" || r === "MEMORY_EXCEEDED"
+                              ? "alert alert-warning py-2"
+                              : "alert alert-info py-2";
 
                           return <div className={cls}>{text}</div>;
                         })()}

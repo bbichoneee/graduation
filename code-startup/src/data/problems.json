@@ -13,6 +13,19 @@
     "tags": ["1. 입출력과 사칙연산", "c"]
   },
   {
+    "id": 2,
+    "title": "2번문제입니다",
+    "description": "printf 함수를 이용하여 \"Hello Code Start Up!\"을 출력하는 프로그램을 작성하시오.",
+    "input": "입력은 없다.",
+    "output": "첫째 줄에 Hello Code Start Up! 을 출력한다.",
+    "testCases": [
+      { "inputData": "", "expectedOutput": "Hello Code Start Up!", "isSample": true }
+    ],
+    "uppoint": 10,
+    "level": 1,
+    "tags": ["1. 입출력과 사칙연산", "c"]
+  },
+  {
     "id": 11,
     "title": "실수의 정수 변환",
     "description": "실수 하나를 입력받아 형 변환을 이용해 소수점을 버리고 정수 부분만 출력하는 프로그램을 작성하시오.",

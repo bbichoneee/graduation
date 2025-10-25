@@ -5,6 +5,12 @@ import MenuBar from "../../components/common/MenuBar";
 import "./UserQ.scss";
 import UserCard from "../../components/common/UserCard";
 import useDailyProblem from "../../components/hooks/useDailyProblem";
+import {
+  getTodayKey,
+  getCurrentDailyId,
+  getNextDailyIdPreview,
+  onDailyProgressChange,
+} from "../../lib/dailyProgress";
 
 // 자정까지 남은 시간
 const nextMidnight = () => {
@@ -23,19 +29,28 @@ const fmt = (ms) => {
 export default function UserQ() {
   const navigate = useNavigate();
 
-  // 🔹 지금은 “1번 문제”를 데일리로 가정 (SolveQ 스타일 로드)
-  const DAILY_PROBLEM_ID = 1;
-  const { data: daily, loading, error } = useDailyProblem({ problemId: DAILY_PROBLEM_ID });
+  // 초기엔 아무것도 선택 안 함
+  const [view, setView] = useState("none"); // 'none' | 'daily'
 
+  // 데일리 문제(지금은 1번 고정)
+  const DAILY_PROBLEM_ID = 1;
+  const { data: daily, loading, error } = useDailyProblem({
+    problemId: DAILY_PROBLEM_ID,
+    // 훅이 지원한다면: 선택 전엔 요청도 막기
+    enabled: view === "daily",
+  });
+
+  // 타이머
   const [remain, setRemain] = useState(fmt(nextMidnight() - Date.now()));
   useEffect(() => {
     const t = setInterval(() => setRemain(fmt(nextMidnight() - Date.now())), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const onClickDaily = () => {
+  const openDaily = () => setView("daily");
+  const goSolve = () => {
     if (!daily) return;
-    navigate(`/solveq/${daily.id}`); // 라우팅 규약에 맞게 수정
+    navigate(`/solveq/${daily.id}`);
   };
 
   return (
@@ -45,40 +60,67 @@ export default function UserQ() {
         <div className="lefts">
           <UserCard />
           <div className="btn-group-vertical leftbtn">
-            <button type="button" className="btn btn-outline-dark choicebtn" id
-            ="firstbtn">데일리 문제</button>
-            <button type="button" className="btn btn-outline-dark choicebtn">취약 문제 풀기</button>
+            <button
+              type="button"
+              className={`btn btn-outline-dark choicebtn ${view === "daily" ? "active" : ""}`}
+              id="firstbtn"
+              onClick={openDaily}
+              aria-pressed={view === "daily"}
+            >
+              데일리 문제
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline-dark choicebtn"
+              onClick={() => setView("none")}
+              aria-pressed={view === "none"}
+            >
+              취약 문제 풀기
+            </button>
           </div>
         </div>
 
         <div className="rights">
-            <div className="rights-head">
-                <div className="rights-timer">문제 초기화까지 남은 시간 : {remain}</div>
+          {/* 아무 것도 선택 안 했을 때: 안내만 */}
+          {view === "none" ? (
+            <div className="rights--empty">
+              <div className="placeholder-title point">메뉴를 선택하세요</div>
             </div>
-            <div className="rights-body">
+          ) : (
+            /* 데일리 선택 시에만 헤더/바디/푸터 표시 */
+            <>
+              <div className="rights-head">
+                <div className="rights-timer">문제 초기화까지 남은 시간 : {remain}</div>
+              </div>
+
+              <div className="rights-body">
                 <div
-                    className="daily-card"
-                    role="button"
-                    tabIndex={0}
-                    onClick={onClickDaily}
-                    onKeyDown={(e) => (e.key === "Enter" ? onClickDaily() : null)}
+                  className="daily-card"
+                  role="button"
+                  tabIndex={0}
+                  onClick={goSolve}
+                  onKeyDown={(e) => (e.key === "Enter" ? goSolve() : null)}
                 >
-                    {loading && <div className="daily-loading">불러오는 중…</div>}
-                    {error && <div className="daily-loading">불러오기 실패: {String(error.message || error)}</div>}
-                    {(!loading && !error && daily) && (
+                  {loading && <div className="daily-loading">불러오는 중…</div>}
+                  {error && (
+                    <div className="daily-loading">불러오기 실패: {String(error.message || error)}</div>
+                  )}
+                  {!loading && !error && daily && (
                     <>
-                        <div className="daily-meta">
+                      <div className="daily-meta">
                         <span className="daily-id">#{daily.id}</span>
                         <span className="daily-level">Lv.{daily.level ?? "?"}</span>
-                        </div>
-                        <div className="daily-title">{daily.title}</div>
-                        <div className="daily-cta">바로 풀러 가기 →</div>
+                      </div>
+                      <div className="daily-title">{daily.title}</div>
+                      <div className="daily-cta">바로 풀러 가기 →</div>
                     </>
-                    )}
+                  )}
                 </div>
-            </div>
+              </div>
 
-          <div className="rights-footer">하루에 하나씩이라도 풀자</div>
+              <div className="rights-footer">하루에 하나씩이라도 풀자</div>
+            </>
+          )}
         </div>
       </div>
     </div>

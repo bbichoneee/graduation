@@ -1,0 +1,170 @@
+@import "/src/styles/main.scss";
+
+/* 메뉴바 높이를 바꿔 쓰고 싶으면 프로젝트 공통 변수로 덮어써도 됩니다 */
+:root {
+  --menubar-height: 64px;
+}
+
+.profile-pane {
+  width: 30%;
+  min-width: 300px;
+  height: calc(100vh - var(--menubar-height));
+  position: sticky;
+  top: var(--menubar-height);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.profile-card {
+  height: 80vh;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e9edf1;
+  font-family: $font-main;
+}
+
+.profile-header {
+  font-weight: 700;
+  font-size: 1.5rem;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eef1f5;
+}
+
+.profile-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* =========================
+   상단: 이미지 - 버튼 - 닉네임 (한 줄)
+   아래에 밑줄
+   ========================= */
+.two_content.top {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e9ef; /* 밑줄 */
+}
+
+/* 이미지 + 버튼을 한 덩어리로 (가로 배치) */
+.avatar-wrap {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 5px;
+
+  /* 기존의 고정 크기/absolute 제거 */
+  position: static;
+  width: auto;
+  height: auto;
+  min-width: 0;
+}
+
+/* 프로필 이미지 */
+.profile-image {
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  background: #f2f4f6;
+  border-radius: 10px;
+  border: 1px solid #e5e9ef;
+  display: block;
+}
+
+/* 프로필 사진 변경 버튼: 이미지 '오른쪽'에 위치 */
+.edit-photo-btn {
+  align-self : flex-end;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: #111827;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: transform 0.12s ease, opacity 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+    opacity: 0.95;
+  }
+}
+
+/* 접근성용 숨김 input */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* 닉네임 텍스트 (버튼 오른쪽) */
+.profile-nickname {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+
+  .nickname {
+    color: #111827;
+  }
+}
+
+/* =========================
+   밑줄 아래: 포인트 줄
+   ========================= */
+.two_content.points {
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+  gap: 8px;
+  padding-top: 6px; /* 밑줄과 살짝 간격 */
+}
+
+.points-label {
+  font-size: 1rem;
+}
+
+.points-value {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #334155;
+}
+
+/* (옵션) 하단 통계 카드 스타일 – 필요 없으면 삭제 가능 */
+.two_content.bottom {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  background: #f7f9fb;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .stat-label {
+    color: #6b7785;
+    font-size: 0.875rem;
+  }
+  .stat-value {
+    font-weight: 700;
+  }
+}

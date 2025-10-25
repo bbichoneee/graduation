@@ -2,8 +2,8 @@ spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://localhost:3306/code_startup?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-    username: root
-    password: dhwldbs15@@  # 본인 MariaDB 비밀번호
+    username: root                  # 본인 MariaDB 사용자명
+    password: "fuckcom02"  # 본인 MariaDB 비밀번호
 
   jpa:
     hibernate:
@@ -15,7 +15,7 @@ spring:
         dialect: org.hibernate.dialect.MariaDBDialect
 
 jwt:
-  secret: "u2W9qB4tZx7Jr3MFHn5aQv1sKYp8Lr0dXc6VbT3gNm9Pq2Se4Uh7Jk1Az8Rf5Hg2W"  # ✅ 반드시 긴 랜덤 문자열로 교체
+  secret: "replace-with-very-long-256bit-secret-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # ✅ 반드시 긴 랜덤 문자열로 교체
   access-token-validity-ms: 900000      # 액세스 토큰 유효기간 (15분)
   refresh-token-validity-ms: 1209600000 # 리프레시 토큰 유효기간 (14일)
   refresh-cookie-name: refresh_token    # HttpOnly 쿠키 이름

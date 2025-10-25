@@ -1,8 +1,8 @@
-// 0. 로그인 페이지
+// src/pages/Login/Login.jsx  (파일 경로는 네 프로젝트 구조에 맞게)
 import "./Login.scss";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../../api/auth"; // ✅ 모의/실서버 자동 전환 래퍼
+import { login } from "../../api/auth";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -17,8 +17,13 @@ const Login = () => {
     setErr("");
     setLoading(true);
     try {
-      await login({ username, password }); // ← 자동으로 mock 또는 실서버 호출
-      navigate("/"); // 로그인 성공 후 이동 경로
+      const result = await login({ username, password }); // 토큰 저장 + ok 반환
+      if (!result.ok) {
+        setErr("토큰 저장에 실패했습니다. 응답 형식을 확인해주세요.");
+        return;
+      }
+      // 저장 성공 → 이동
+      navigate("/");
     } catch (e) {
       setErr(e?.message || "로그인에 실패했습니다.");
     } finally {
@@ -28,7 +33,6 @@ const Login = () => {
 
   return (
     <div className="login_page">
-      {/* 로그인 폼 영역 */}
       <div className="login-form">
         <div className="main_logo_box">
           <img className="main_logo" src="./img/logo.png" alt="logo" />
@@ -80,4 +84,5 @@ const Login = () => {
     </div>
   );
 };
+
 export default Login;

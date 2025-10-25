@@ -21,7 +21,6 @@ const PATHS = {
 const MENUS = [
   { key: "qbank", label: "문제 은행" },
   { key: "userq", label: "사용자 맞춤 문제" },
-  { key: "codechallenge", label: "코드 챌린지" },
   { key: "ranking", label: "랭킹" },
   { key: "mypage", label: "내정보" },
 ];
