@@ -6,7 +6,13 @@ const MyPage = () => {
     return (
         <div>
             <MenuBar />
-            <ProfileCard/>
+            <div>
+                <ProfileCard/>
+                <div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </div>
         </div>
     );
 }
