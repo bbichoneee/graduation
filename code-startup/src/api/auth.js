@@ -23,53 +23,39 @@ export async function signUp(payload) {
   }
 }
 
-/**
- * 로그인
- * - accessToken: 응답 바디에서 읽음
- * - refreshToken: 응답 헤더(X-Refresh-Token) 우선, 없으면 바디에서 시도
- * - 토큰 저장 후 저장 성공 여부(ok)까지 반환
- */
+/** 로그인: 이전 토큰 완전 제거 → 새 토큰 저장 */
 export async function login(payload) {
-  if (USE_MOCK) {
-    const data = await mockLogin(payload);
-    setTokens(data.accessToken, data.refreshToken);
-    const ok = !!(localStorage.getItem("accessToken") || "");
-    return { ok, accessToken: localStorage.getItem("accessToken") || "", raw: data };
-  }
+  // 1) 혹시 남아있는 이전 토큰 제거 (섞임 방지)
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
 
-  try {
-    const res = await http.post("/api/auth/login", payload);
-    const data = res.data || {};
-    const accessToken = data.accessToken;
+  // 2) 실제 로그인
+  const res = await http.post("/api/auth/login", payload);
+  const data = res.data || {};
 
-    // 리프레시 토큰: 헤더 우선
-    const headerRt =
-      res.headers?.["x-refresh-token"] ??
-      res.headers?.["X-Refresh-Token"] ??
-      null;
+  // 3) 새 토큰 추출
+  const accessToken =
+    data.accessToken ??
+    data.access_token ??
+    null;
 
-    setTokens(accessToken, headerRt ?? data.refreshToken ?? null);
+  const headerRt =
+    res.headers?.["x-refresh-token"] ??
+    res.headers?.["X-Refresh-Token"] ??
+    null;
 
-    // 저장 검증
-    const savedAT = localStorage.getItem("accessToken") || "";
-    const ok = !!savedAT;
+  // 4) 저장
+  setTokens(accessToken, headerRt ?? data.refreshToken ?? data.refresh_token ?? null);
 
-    return { ok, accessToken: savedAT, raw: data };
-  } catch (err) {
-    const status = err?.response?.status ?? "";
-    const msg = err?.response?.data
-      ? typeof err.response.data === "string"
-        ? err.response.data
-        : JSON.stringify(err.response.data)
-      : "";
-    throw new Error(`로그인 실패 ${status}${msg ? `: ${msg}` : ""}`);
-  }
+  // 5) 저장 검증
+  const savedAT = localStorage.getItem("accessToken") || "";
+  return { ok: !!savedAT, accessToken: savedAT, raw: data };
 }
 
 /** 내 정보 조회 */
 export async function fetchMe() {
   if (USE_MOCK) return mockMe(getAccess());
-  const res = await http.get("/api/auth/me");
+  const res = await http.get("/api/users/me");
   return res.data;
 }
 

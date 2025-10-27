@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-   "scripts": {
+  "scripts": {
     "dev": "cross-env SASS_QUIET_DEPS=true vite",
     "build": "cross-env SASS_QUIET_DEPS=true vite build",
     "preview": "vite preview"

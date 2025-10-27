@@ -30,95 +30,140 @@ export const http = axios.create({
 });
 
 /** ====== 리프레시 시도 함수 (Axios 전용) ====== */
+// src/api/http.js  안의 tryRefreshReal 교체
 async function tryRefreshReal() {
-  const rt = getRefresh();
-  if (!rt) return false;
-
-  // 인터셉터에 의한 무한루프를 막기 위해, 인스턴스가 아닌 'axios' 기본 클라이언트로 호출
+  const rt = getRefresh(); // localStorage에 저장해둔 최신 refresh
   try {
     const res = await axios.post(
       `${API_BASE}/api/auth/refresh`,
-      { refreshToken: rt }, // 서버가 바디도 받도록 구현되어 있음
-      { withCredentials: true }
+      { refreshToken: rt ?? null },            // 바디도 같이 보냄(백업용)
+      {
+        withCredentials: true,                 // 쿠키도 포함
+        headers: rt ? { 'X-Refresh-Token': rt } : {},  // ✅ 헤더로도 반드시 전달
+      }
     );
 
-    // 응답 바디/헤더에서 새 토큰 추출
     const data = res.data || {};
-    const headerRt =
-      res.headers?.["x-refresh-token"] ??
-      res.headers?.["X-Refresh-Token"] ??
-      null;
+    const headerRefresh =
+      res.headers?.['x-refresh-token'] ??
+      res.headers?.['X-Refresh-Token'] ?? null;
 
-    // access 토큰(필수), refresh 토큰(헤더 우선, 바디 대안)
-    setTokens(data.accessToken, headerRt ?? data.refreshToken ?? null);
+    const nextAccess  = data.accessToken || data.access_token || null;
+    const nextRefresh = headerRefresh ??
+                        data.refreshToken ??
+                        data.refresh_token ?? undefined;
+
+    if (!nextAccess) return false;
+
+    setTokens(nextAccess, nextRefresh);
+    console.log(
+      '[REFRESH] sentHeader=', !!rt,
+      ' newAT=', (nextAccess||'').slice(0,24)+'...',
+      ' newRT=', headerRefresh ? '(header)' : (nextRefresh ? '(body/keep)' : '(none)')
+    );
     return true;
-  } catch {
+  } catch (e) {
+    console.warn('[REFRESH] FAIL', e?.response?.status, e?.response?.data);
     return false;
   }
 }
 
-/** ====== 요청 인터셉터: Authorization 자동 부착 ====== */
 http.interceptors.request.use((config) => {
-  if (USE_MOCK) return config; // 모의 모드는 각 API 파일에서 직접 분기
+  if (USE_MOCK) return config;
 
-  const at = getAccess();
-  if (at) {
-    // 기존 헤더 보존
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${at}`;
+  const urlStr = String(config.url || '');
+  let path = urlStr;
+  try { path = new URL(urlStr, API_BASE).pathname; } catch {}
+
+  const skipAuth =
+    config.method?.toUpperCase() === 'OPTIONS' ||
+    path.includes('/api/auth/login') ||
+    path.includes('/api/auth/signup') ||
+    path.includes('/api/auth/refresh');
+
+  if (!skipAuth) {
+    const at = getAccess();
+    if (at) {
+      config.headers = config.headers ?? {};
+      config.headers.Authorization = `Bearer ${at}`;
+    }
   }
-   // ★ 디버그: 어떤 URL로 어떤 Authorization으로 나가는지 확인
-  console.log("[HTTP] →", config.method?.toUpperCase(), config.url, config.headers?.Authorization);
+  console.log('[HTTP] →', (config.method||'GET').toUpperCase(), path, config.headers?.Authorization);
   return config;
 });
 
 
-/** ====== 응답 인터셉터: 401이면 단 1회 리프레시 후 재시도 ====== */
+
+/** ====== 응답 인터셉터: 성공 시 토큰 갱신, 401 시 1회 리프레시 후 재시도 ====== */
 http.interceptors.response.use(
-  (res) => res,
+  // ✅ 성공 응답
+  (res) => {
+    try {
+      const data = res?.data || {};
+      // 바디에 새 accessToken 이 올 수 있음
+      const maybeAccess = data.accessToken || data.access_token || null;
+      // 헤더에 새 refresh 토큰이 올 수 있음
+      const headerRefresh =
+        res.headers?.['x-refresh-token'] ??
+        res.headers?.['X-Refresh-Token'] ??
+        null;
+
+      if (maybeAccess || headerRefresh) {
+        // access 는 바디, refresh 는 헤더(또는 유지)
+        setTokens(maybeAccess || getAccess(), headerRefresh ?? undefined);
+      }
+    } catch {}
+    return res;
+  },
+
+  // ❌ 에러 응답
   async (error) => {
     const { config, response } = error;
-    if (!response) throw error; // 네트워크 오류 등
+    console.warn('[HTTP:401]', config.method?.toUpperCase(), config.url, 'res.data=', response.data);
+    if (!response) throw error; // 네트워크 오류 등 그대로
 
-    const url = (config?.url || "").toString();
+    const url = (config?.url || '').toString();
 
-    // ❌ 리프레시 요청 자체에선 재시도/리프레시 로직 금지 (무한루프 방지)
-    if (url.includes("/api/auth/refresh")) {
+    // 리프레시 요청 자체는 재시도 금지 (무한루프 방지)
+    if (url.includes('/api/auth/refresh')) {
       throw error;
     }
 
-    // ✅ 401이고, 아직 재시도 안 했으면
-    if (response.status === 401 && !config._retry) {
-      config._retry = true;
-
-      // ✅ 동시에 여러 401이 떠도 리프레시는 '단 한 번'만 수행
-      if (!refreshPromise) {
-        refreshPromise = (async () => {
-          try {
-            const ok = await tryRefreshReal(); // 기존 함수 사용
-            return ok;
-          } finally {
-            // 완료되면 잠금 해제
-            refreshPromise = null;
-          }
-        })();
-      }
-      const refreshed = await refreshPromise;
-
-      if (refreshed) {
-        // 새 액세스 토큰으로 Authorization 교체
-        const newAT = getAccess(); // http.js 안의 함수
-        config.headers = config.headers ?? {};
-        if (newAT) config.headers.Authorization = `Bearer ${newAT}`;
-
-        // 원 요청 재시도 (쿠키 포함)
-        config.withCredentials = true;
-        return http(config);
-      }
+    // 401 이 아니거나 이미 재시도했다면 그대로 던짐
+    if (response.status !== 401 || config._retry) {
+      throw error;
     }
 
-    // 위 조건에 해당 안 되면 원래 에러 그대로
+    // 여기서부터 401 최초 1회만 리프레시 시도
+    config._retry = true;
+
+    // 동시에 여러 401이 떠도 리프레시는 '한 번'만 수행
+    if (!refreshPromise) {
+      refreshPromise = (async () => {
+        try {
+          const ok = await tryRefreshReal(); // 바디 accessToken, 헤더 X-Refresh-Token 처리
+          return ok;
+        } finally {
+          refreshPromise = null;
+        }
+      })();
+    }
+
+    const refreshed = await refreshPromise;
+
+    if (refreshed) {
+      // 갱신된 access 로 Authorization 교체 후 원요청 재시도
+      const newAT = getAccess();
+      config.headers = config.headers ?? {};
+      if (newAT) config.headers.Authorization = `Bearer ${newAT}`;
+      config.withCredentials = true;
+      return http(config);
+    }
+
+    // 리프레시 실패 → 원 에러 그대로
     throw error;
   }
 );
+
+
 
