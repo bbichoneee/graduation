@@ -8,6 +8,7 @@ import com.Loop.CodeStartUP.external.Judge0Client;
 import com.Loop.CodeStartUP.external.judge0.dto.Judge0SubmitRequest;
 import com.Loop.CodeStartUP.external.judge0.dto.Judge0SubmitResponse;
 import com.Loop.CodeStartUP.domain.user.User;
+import com.Loop.CodeStartUP.domain.ranking.RankingService;   // ✅ 추가
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class SubmissionService {
     private final SubmissionRepository submissionRepository;
     private final ProblemRepository problemRepository;
     private final Judge0Client judge0Client;
+    private final RankingService rankingService;   // ✅ 추가
 
     /** 코드 제출 및 채점 */
     @Transactional
@@ -44,6 +46,12 @@ public class SubmissionService {
         try {
             SubmissionResult result = judgeWithJudge0(problem, code);
             submission.updateResult(result, 0.1, 1024L);
+
+            // ✅ 정답일 경우 랭킹 점수 추가
+            if (result == SubmissionResult.SUCCESS) {
+                rankingService.addScore(user, problem);
+            }
+
         } catch (Exception e) {
             log.error("❌ 채점 중 오류 발생", e);
             submission.updateResult(SubmissionResult.RUNTIME_ERROR, null, null);

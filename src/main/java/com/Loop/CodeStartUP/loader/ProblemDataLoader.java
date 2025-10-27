@@ -44,11 +44,20 @@ public class ProblemDataLoader implements CommandLineRunner {
         for (ProblemDto dto : problemDtos) {
             String testCasesJson = objectMapper.writeValueAsString(dto.getTestCases());
 
-            // ✅ JSON의 id → orderNum 으로 사용
+            // ✅ JSON에 난이도가 없으면 기본 LEVEL_1로 설정
+            Difficulty difficulty = Difficulty.LEVEL_1;
+            if (dto.getDifficulty() != null) {
+                try {
+                    difficulty = Difficulty.valueOf(dto.getDifficulty().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    log.warn("⚠️ 알 수 없는 난이도 '{}', 기본값 LEVEL_1 사용", dto.getDifficulty());
+                }
+            }
+
             Problem problem = Problem.builder()
                     .title(dto.getTitle())
                     .description(dto.getDescription())
-                    .difficulty(Difficulty.EASY) // JSON에 난이도 없음 → 기본값
+                    .difficulty(difficulty)
                     .orderNum(dto.getId())
                     .testCasesJson(testCasesJson)
                     .build();
@@ -62,12 +71,12 @@ public class ProblemDataLoader implements CommandLineRunner {
     @Getter
     @Setter
     static class ProblemDto {
-        private int id; // ✅ JSON에 있으니까 유지
+        private int id;
         private String title;
         private String description;
-        private String input;  // ✅ JSON에 있음
-        private String output; // ✅ JSON에 있음
-        private String difficulty; // ✅ 새로 추가
+        private String input;
+        private String output;
+        private String difficulty;
         private List<TestCase> testCases;
     }
 }

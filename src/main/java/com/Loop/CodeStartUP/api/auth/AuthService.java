@@ -92,7 +92,7 @@ public class AuthService {
             throw new IllegalArgumentException("리프레시 토큰이 유효하지 않습니다.");
         }
 
-// 2️⃣ DB에 저장된 토큰인지 확인
+        // 2️⃣ DB에 저장된 토큰인지 확인
         RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리프레시 토큰입니다."));
 
@@ -100,16 +100,16 @@ public class AuthService {
             throw new IllegalArgumentException("이미 만료된 리프레시 토큰입니다.");
         }
 
-// 3️⃣ 유저 조회
+        // 3️⃣ 유저 조회
         User user = storedToken.getUser();
 
-// 4️⃣ 새로운 Access Token 생성
+        // 4️⃣ 새로운 Access Token 생성
         Map<String, Object> claims = Map.of("userId", user.getId());
-        String newAccessToken = tokenProvider.createAccessToken(user.getNickname(), claims);
+        String newAccessToken = tokenProvider.createAccessToken(user.getUsername(), claims); // ✅ 수정 (nickname → username)
 
-// 5️⃣ 새로운 Refresh Token 발급 (기존 토큰 폐기)
+        // 5️⃣ 새로운 Refresh Token 발급 (기존 토큰 폐기)
         refreshTokenRepository.delete(storedToken);
-        String newRefreshToken = tokenProvider.createRefreshToken(user.getNickname());
+        String newRefreshToken = tokenProvider.createRefreshToken(user.getUsername()); // ✅ 수정 (nickname → username)
         Date expiry = tokenProvider.getExpiration(newRefreshToken);
 
         refreshTokenRepository.save(RefreshToken.builder()
@@ -119,13 +119,13 @@ public class AuthService {
                 .revoked(false)
                 .build());
 
-// 6️⃣ 새 쿠키 설정
+        // 6️⃣ 새 쿠키 설정
         ResponseCookie cookie = ResponseCookie.from("refresh_token", newRefreshToken)
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
                 .path("/")
-                .maxAge(tokenProvider.getRefreshValiditySeconds()) // ✅ 이 부분도 수정
+                .maxAge(tokenProvider.getRefreshValiditySeconds())
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         response.addHeader("X-Refresh-Token", newRefreshToken);

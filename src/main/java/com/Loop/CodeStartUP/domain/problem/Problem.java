@@ -3,7 +3,6 @@ package com.Loop.CodeStartUP.domain.problem;
 import com.Loop.CodeStartUP.domain.common.SoftDeletableEntity;
 import com.Loop.CodeStartUP.domain.problem.dto.TestCase;
 import com.Loop.CodeStartUP.enums.Difficulty;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +33,7 @@ public class Problem extends SoftDeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "problem_id")
-    private Long id; // ⚙️ DB에서 자동 생성되는 PK
+    private Long id;
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -47,33 +46,43 @@ public class Problem extends SoftDeletableEntity {
     private Difficulty difficulty;
 
     @Column(name = "order_num", nullable = false)
-    private int orderNum; // ⚙️ JSON의 id 값을 이 필드에 매핑
+    private int orderNum;
 
     @Column(name = "cached_accuracy_rate", nullable = false)
     private double cachedAccuracyRate = 0.0;
+
+    // ✅ 새로 추가: 난이도 기반 점수 필드
+    @Column(nullable = false)
+    private int score;
 
     // ⭐ 테스트 케이스를 JSON 문자열로 저장
     @Column(name = "test_cases", columnDefinition = "TEXT", nullable = false)
     private String testCasesJson;
 
-    // ⭐ JSON 변환용 ObjectMapper
     @Transient
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    // ⚙️ Builder (difficulty, orderNum 기본값 처리)
+    // ⚙️ Builder
     @Builder
     public Problem(String title, String description, Difficulty difficulty, int orderNum, String testCasesJson) {
         validateTitle(title);
         this.title = title;
         this.description = description;
-        this.difficulty = (difficulty != null) ? difficulty : Difficulty.EASY; // ✅ 기본값 EASY
-        this.orderNum = (orderNum > 0) ? orderNum : 1;                         // ✅ JSON id → orderNum
+        this.difficulty = (difficulty != null) ? difficulty : Difficulty.LEVEL_1;
+        this.orderNum = (orderNum > 0) ? orderNum : 1;
         this.testCasesJson = (testCasesJson != null) ? testCasesJson : "[]";
         this.cachedAccuracyRate = 0.0;
+        this.score = this.difficulty.getScore(); // ✅ 난이도 기반 자동 점수
     }
 
-    // ======== JSON 변환 로직 ========
+    @PrePersist
+    public void prePersist() {
+        if (difficulty != null) {
+            this.score = difficulty.getScore();
+        }
+    }
 
+    // ======== JSON 변환 ========
     public List<TestCase> getTestCases() {
         try {
             return objectMapper.readValue(testCasesJson, new TypeReference<List<TestCase>>() {});
@@ -91,14 +100,16 @@ public class Problem extends SoftDeletableEntity {
     }
 
     // ======== 비즈니스 로직 ========
-
     public void update(String title, String description, Difficulty difficulty) {
         if (title != null && !title.trim().isEmpty()) {
             validateTitle(title);
             this.title = title;
         }
         if (description != null) this.description = description;
-        if (difficulty != null) this.difficulty = difficulty;
+        if (difficulty != null) {
+            this.difficulty = difficulty;
+            this.score = difficulty.getScore(); // ✅ 업데이트 시 점수 동기화
+        }
     }
 
     public void updateOrder(int orderNum) {
@@ -113,8 +124,7 @@ public class Problem extends SoftDeletableEntity {
         this.cachedAccuracyRate = accuracyRate;
     }
 
-    // ======== 검증 메서드 ========
-
+    // ======== 검증 ========
     private void validateTitle(String title) {
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("제목은 필수입니다.");
