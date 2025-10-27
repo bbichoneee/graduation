@@ -7,9 +7,9 @@ import TimeLimitBadge from "../Qbank/TimeLimitBadge";
 import AnswerRate from "../Qbank/AnswerRate";
 import useSolveTimer from "../../components/hooks/useSolveTimer";
 import CodeEditor from "../../components/utility/CodeEditor";
-import { fetchProblemById } from "../../api/problems";
+import { fetchProblemById, fetchProblemStats } from "../../api/problems"; // ⬅️ 추가
 import { submitSolution } from "../../api/submission";
-import useProblemStats from "../../components/hooks/useProblemStats";
+// import useProblemStats from "../../components/hooks/useProblemStats"; // ⬅️ 제거(사용 안함)
 import { markSolvedToday } from "../../lib/dailyProgress";
 
 export default function SolveQ() {
@@ -28,6 +28,15 @@ export default function SolveQ() {
 
   // ✅ 정답 처리 중복 방지용 플래그
   const solvedMarkedRef = useRef(false);
+
+  // ✅ 통계 상태 (기본값: 미구현/비가용)
+  const [stats, setStats] = useState({
+    solved: 0,
+    attempts: 0,
+    rate: null,       // 0~1 (null이면 표시는 선택)
+    available: false, // /stats 미구현/401/404면 false
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const [source, setSource] = useState(
 `#include <stdio.h>
@@ -48,6 +57,17 @@ int main(void){
       .then((data) => { if (alive) setProblem(data); })
       .catch((e) => { if (alive) setLoadError(e); })
       .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [pid]);
+
+  // ✅ 통계 로드 (/stats 없으면 기본값으로)
+  useEffect(() => {
+    let alive = true;
+    setStatsLoading(true);
+    fetchProblemStats(pid)
+      .then((s) => { if (alive) setStats(s); })
+      .catch(() => { /* 기본값 유지 */ })
+      .finally(() => { if (alive) setStatsLoading(false); });
     return () => { alive = false; };
   }, [pid]);
 
@@ -75,8 +95,6 @@ int main(void){
       });
       setSubmission(created);
       setTab("result");
-      // ⚠️ 굳이 여기서 markSolvedToday를 바로 호출하지 않습니다.
-      // 위 useEffect가 SUCCESS 전환을 감지해 딱 한 번만 기록합니다.
     } catch (e) {
       alert("제출 실패: " + (e.response?.data?.message || e.message));
     }
@@ -104,7 +122,6 @@ int main(void){
     }
   };
 
-  // (기존에 있던 statusClass 유지 or 살짝 보강)
   const statusClass = (s) => {
     const up = String(s || "").toUpperCase();
     if (up === "SUCCESS") return "bg-success";
@@ -154,10 +171,22 @@ int main(void){
                       />
                     </div>
                   </div>
+
+                  {/* ✅ 정답률 표시 영역: stats 사용 */}
                   <div className="line_container">
                     <div className="fw-bold problem_title">정답률</div>
                     <div>
-                      <AnswerRate problemId={problem.id} wsUrl="wss://api.example.com/ws" />
+                      {statsLoading ? (
+                        <span className="badge bg-secondary">불러오는 중…</span>
+                      ) : (
+                        <AnswerRate
+                          available={stats.available}
+                          rate={stats.rate}           // 0~1 or null
+                          solved={stats.solved}
+                          attempts={stats.attempts}
+                          loading={statsLoading}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -246,19 +275,17 @@ int main(void){
                     <div className="border rounded overflow-hidden">
                       <CodeEditor value={source} onChange={setSource} height="420px" />
                     </div>
-                    {/* ✅ 언어 드롭다운 제거됨 (C 고정) */}
                   </>
                 ) : tab === "others" ? (
                   <div className="text-muted">
                     아직 다른 사람 풀이가 없습니다. (추후 API 연동/목록 표 구현)
                   </div>
                 ) : (
-                  // 결과 탭
                   <div>
                     {submission ? (
                       <>
                         <div className="mb-2 d-flex align-items-center gap-2">
-                          <span className={`badge ${statusClass(submission.result)}`}>
+                          <span className="badge ${statusClass(submission.result)}">
                             {resultLabel(submission.result)}
                           </span>
                           <span className="text-muted small">({String(submission.result)})</span>

@@ -32,15 +32,11 @@ export const http = axios.create({
 /** ====== 리프레시 시도 함수 (Axios 전용) ====== */
 // src/api/http.js  안의 tryRefreshReal 교체
 async function tryRefreshReal() {
-  const rt = getRefresh(); // localStorage에 저장해둔 최신 refresh
   try {
     const res = await axios.post(
       `${API_BASE}/api/auth/refresh`,
-      { refreshToken: rt ?? null },            // 바디도 같이 보냄(백업용)
-      {
-        withCredentials: true,                 // 쿠키도 포함
-        headers: rt ? { 'X-Refresh-Token': rt } : {},  // ✅ 헤더로도 반드시 전달
-      }
+      null,                                // ⚠️ body 비움
+      { withCredentials: true }            // ⚠️ 쿠키만 전송
     );
 
     const data = res.data || {};
@@ -49,24 +45,38 @@ async function tryRefreshReal() {
       res.headers?.['X-Refresh-Token'] ?? null;
 
     const nextAccess  = data.accessToken || data.access_token || null;
-    const nextRefresh = headerRefresh ??
-                        data.refreshToken ??
-                        data.refresh_token ?? undefined;
+    const nextRefresh = headerRefresh ?? undefined;
 
     if (!nextAccess) return false;
 
     setTokens(nextAccess, nextRefresh);
-    console.log(
-      '[REFRESH] sentHeader=', !!rt,
-      ' newAT=', (nextAccess||'').slice(0,24)+'...',
-      ' newRT=', headerRefresh ? '(header)' : (nextRefresh ? '(body/keep)' : '(none)')
-    );
+    console.log('[REFRESH] cookie-only OK  newAT=', (nextAccess||'').slice(0,24)+'...', ' newRT=', headerRefresh ? '(header)' : '(cookie)');
     return true;
   } catch (e) {
     console.warn('[REFRESH] FAIL', e?.response?.status, e?.response?.data);
     return false;
   }
 }
+
+/** 
+ * 로그인 직후나 보호 API 호출 직전에 Access Token을 보장합니다.
+ * - 로컬에 AT가 있으면 그대로 반환
+ * - 없으면 refresh 1회 시도 → 성공 시 새 AT 반환, 실패 시 null
+ */
+export async function ensureAccessToken() {
+  const at = getAccess && getAccess();   // 로컬 AT 확인
+  if (at) return at;
+
+  try {
+    const ok = await tryRefreshReal();   // ← http.js 안에 이미 있는 함수 사용
+    if (!ok) return null;
+    const next = getAccess && getAccess();
+    return next || null;
+  } catch {
+    return null;
+  }
+}
+
 
 http.interceptors.request.use((config) => {
   if (USE_MOCK) return config;
@@ -156,9 +166,14 @@ http.interceptors.response.use(
       const newAT = getAccess();
       config.headers = config.headers ?? {};
       if (newAT) config.headers.Authorization = `Bearer ${newAT}`;
+      console.log('[RETRY] attach AT =', String(newAT).slice(0,24)+'...', '→', config.url);
       config.withCredentials = true;
       return http(config);
     }
+
+     try {
+      setTokens(null, null); // access/refresh 정리
+    } catch {}
 
     // 리프레시 실패 → 원 에러 그대로
     throw error;
