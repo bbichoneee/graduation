@@ -1,13 +1,15 @@
+// src/components/common/UserCard.jsx
 import { useEffect, useState } from "react";
-import { fetchMe } from "../../api/auth"; // 모의/실서버 자동 전환 래퍼
+import { fetchMe } from "../../api/auth";
+import SecureAvatar from "./SecureAvatar";           // ✅ 추가
 import "./UserCard.scss";
-
-const DEFAULT_AVATAR = "/img/default_profile.jpg";
 
 const UserCard = () => {
   const [user, setUser] = useState({
+    id: undefined,
+    username: "",
     nickname: "닉네임",
-    profileImageUrl: DEFAULT_AVATAR,
+    profileImageUrl: "",   // 서버 값(상대/절대 어떤 것이든)
     totalPoints: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -17,14 +19,16 @@ const UserCard = () => {
     let alive = true;
     (async () => {
       try {
-        const me = await fetchMe(); // { username, nickname, profileImageUrl, totalPoints, ... }
+        const me = await fetchMe(); // { id, username, nickname, profileImageUrl, totalPoints, ... }
         if (!alive) return;
         setUser({
+          id: me?.id,
+          username: me?.username ?? "",
           nickname: me?.nickname ?? "닉네임",
-          profileImageUrl: me?.profileImageUrl || DEFAULT_AVATAR,
+          profileImageUrl: me?.profileImageUrl ?? "",
           totalPoints: Number.isFinite(me?.totalPoints) ? me.totalPoints : 0,
         });
-      } catch (e){
+      } catch {
         if (alive) setError("유저 정보를 불러오지 못했어요.");
       } finally {
         if (alive) setLoading(false);
@@ -33,20 +37,34 @@ const UserCard = () => {
     return () => { alive = false; };
   }, []);
 
-  const onImgError = (e) => {
-    if (e?.target?.src !== window.location.origin + DEFAULT_AVATAR) {
-      e.target.src = DEFAULT_AVATAR;
-    }
-  };
-
   const pointsText = `${user.totalPoints} points`;
 
   return (
-    <div className="card user-card">
+    <div className="card user-card" aria-busy={loading}>
       <div className="card_profile">
-        <img src={user.profileImageUrl || DEFAULT_AVATAR} alt="프로필" onError={onImgError} />
-        <p>{loading ? "로딩 중..." : `'${user.nickname}'님`}</p>
+        <SecureAvatar
+          size={100}
+          className="avatar"
+          circle={false}
+          candidates={[
+            user.profileImageUrl,                       // 서버 제공값(상대/절대 무엇이든)
+            user.id && `/files/profile/${user.id}.jpg`,
+            user.id && `/files/profile/${user.id}.png`,
+            user.username && `/files/profile/${user.username}.jpg`,
+            user.username && `/files/profile/${user.username}.png`,
+            `https://api.dicebear.com/9.x/identicon/svg?seed=${
+              encodeURIComponent(user.nickname || user.username || `User#${user.id ?? ""}`)
+            }`,
+            "/img/default_profile.jpg",                 // 최종 폴백 (SecureAvatar 내부에도 있지만 명시)
+          ].filter(Boolean)}
+        />
+
+        <div className="text-wrap">
+          <p className="nickname">{loading ? "로딩 중..." : `'${user.nickname}'님`}</p>
+          {error ? <span className="err">{error}</span> : null}
+        </div>
       </div>
+
       <div className="card-footer">
         <span>보유 Up 포인트 : {loading ? "…" : pointsText}</span>
       </div>
