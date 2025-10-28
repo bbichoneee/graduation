@@ -1,5 +1,5 @@
 // src/pages/SolveQ.jsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./SolveQ.scss";
 import MenuBar from "../../components/common/MenuBar";
@@ -7,10 +7,33 @@ import TimeLimitBadge from "../Qbank/TimeLimitBadge";
 import AnswerRate from "../Qbank/AnswerRate";
 import useSolveTimer from "../../components/hooks/useSolveTimer";
 import CodeEditor from "../../components/utility/CodeEditor";
-import { fetchProblemById, fetchProblemStats } from "../../api/problems"; // ⬅️ 추가
+import { fetchProblemById, fetchProblemStats } from "../../api/problems";
 import { submitSolution } from "../../api/submission";
-// import useProblemStats from "../../components/hooks/useProblemStats"; // ⬅️ 제거(사용 안함)
 import { markSolvedToday } from "../../lib/dailyProgress";
+
+/** === 백엔드 → 화면 필드 적응 === */
+const mapDifficultyToLevel = (d) => {
+  const m = String(d || "").match(/(\d+)/); // "LEVEL_3" → 3
+  return m ? Number(m[1]) : null;
+};
+function adaptProblemDetail(raw) {
+  if (!raw) return null;
+  const level = raw.level ?? mapDifficultyToLevel(raw.difficulty);
+  const uppoint = raw.uppoint ?? (Number.isFinite(raw.score) ? raw.score : (level ? level * 10 : null));
+
+  // 샘플(있는 경우), 없으면 첫 번째 케이스
+  const list = Array.isArray(raw.testCases) ? raw.testCases : [];
+  const sample = list.find((t) => t?.isSample) ?? list[0] ?? null;
+
+  return {
+    ...raw,
+    level,
+    uppoint,
+    sampleIn: sample?.inputData ?? "-",
+    sampleOut: sample?.expectedOutput ?? "-",
+    testCases: list, // 그대로 유지(제출 시 사용)
+  };
+}
 
 export default function SolveQ() {
   const { id } = useParams();
@@ -23,55 +46,48 @@ export default function SolveQ() {
   const [tab, setTab] = useState("submit"); // submit | others | result
   const [sharePublic, setSharePublic] = useState(false);
 
-  const [submission, setSubmission] = useState(null); // 서버에서 받은 채점 결과
+  const [submission, setSubmission] = useState(null);
   const { formatted, recordSubmit } = useSolveTimer();
 
-  // ✅ 정답 처리 중복 방지용 플래그
-  const solvedMarkedRef = useRef(false);
-
-  // ✅ 통계 상태 (기본값: 미구현/비가용)
-  const [stats, setStats] = useState({
-    solved: 0,
-    attempts: 0,
-    rate: null,       // 0~1 (null이면 표시는 선택)
-    available: false, // /stats 미구현/401/404면 false
-  });
+  // 통계
+  const [stats, setStats] = useState({ solved: 0, attempts: 0, rate: null, available: false });
   const [statsLoading, setStatsLoading] = useState(true);
 
-  const [source, setSource] = useState(
-`#include <stdio.h>
+  // 정답 처리 중복 방지
+  const solvedMarkedRef = useRef(false);
 
-int main(void){
-    // 여기에 코드를 작성하세요
-    return 0;
-}
-`
-  );
-
-  // 문제 로드
+  // 문제 로드(+적응)
   useEffect(() => {
     let alive = true;
     setLoading(true);
     setLoadError(null);
-    fetchProblemById(pid)
-      .then((data) => { if (alive) setProblem(data); })
-      .catch((e) => { if (alive) setLoadError(e); })
-      .finally(() => { if (alive) setLoading(false); });
+    (async () => {
+      try {
+        const raw = await fetchProblemById(pid);
+        if (!alive) return;
+        setProblem(adaptProblemDetail(raw));
+      } catch (e) {
+        if (!alive) return;
+        setLoadError(e);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
     return () => { alive = false; };
   }, [pid]);
 
-  // ✅ 통계 로드 (/stats 없으면 기본값으로)
+  // 통계 로드
   useEffect(() => {
     let alive = true;
     setStatsLoading(true);
     fetchProblemStats(pid)
-      .then((s) => { if (alive) setStats(s); })
-      .catch(() => { /* 기본값 유지 */ })
-      .finally(() => { if (alive) setStatsLoading(false); });
+      .then((s) => alive && setStats(s))
+      .catch(() => {}) // 공개 API면 401 안 나와야 함(백엔드 GET permitAll 확인)
+      .finally(() => alive && setStatsLoading(false));
     return () => { alive = false; };
   }, [pid]);
 
-  // ✅ 정답(SUCCESS) 되자마자 하루 진도 기록 (한 번만)
+  // 정답 기록
   useEffect(() => {
     const r = String(submission?.result || "").toUpperCase();
     if (!problem) return;
@@ -81,17 +97,26 @@ int main(void){
     }
   }, [submission?.result, problem]);
 
-  // 제출(동기 결과 반환) — 언어는 C로 고정
+  // 제출
+  const [source, setSource] = useState(
+`#include <stdio.h>
+
+int main(void){
+    // 여기에 코드를 작성하세요
+    return 0;
+}
+`
+  );
   const handleSubmit = async () => {
     try {
       const usedMs = recordSubmit();
       const created = await submitSolution({
         problemId: pid,
         code: source,
-        language: "c", // ✅ 고정
+        language: "c",
         usedMs,
         sharePublic,
-        testCases: problem.testCases,
+        testCases: problem?.testCases ?? [],
       });
       setSubmission(created);
       setTab("result");
@@ -121,15 +146,11 @@ int main(void){
       default: return key || "-";
     }
   };
-
   const statusClass = (s) => {
     const up = String(s || "").toUpperCase();
     if (up === "SUCCESS") return "bg-success";
     if (up === "FAIL") return "bg-danger";
-    if (up === "COMPILE_ERROR") return "bg-warning text-dark";
-    if (up === "RUNTIME_ERROR") return "bg-warning text-dark";
-    if (up === "TIMEOUT") return "bg-warning text-dark";
-    if (up === "MEMORY_EXCEEDED") return "bg-warning text-dark";
+    if (up === "COMPILE_ERROR" || up === "RUNTIME_ERROR" || up === "TIMEOUT" || up === "MEMORY_EXCEEDED") return "bg-warning text-dark";
     if (up === "PENDING" || up === "JUDGING") return "bg-info text-dark";
     return "bg-secondary";
   };
@@ -172,7 +193,7 @@ int main(void){
                     </div>
                   </div>
 
-                  {/* ✅ 정답률 표시 영역: stats 사용 */}
+                  {/* 정답률 */}
                   <div className="line_container">
                     <div className="fw-bold problem_title">정답률</div>
                     <div>
@@ -181,7 +202,7 @@ int main(void){
                       ) : (
                         <AnswerRate
                           available={stats.available}
-                          rate={stats.rate}           // 0~1 or null
+                          rate={stats.rate}
                           solved={stats.solved}
                           attempts={stats.attempts}
                           loading={statsLoading}
@@ -191,10 +212,11 @@ int main(void){
                   </div>
                 </div>
 
+                {/* 입력/출력: problem.sampleIn/Out 사용 */}
                 <div className="two_container">
                   <div className="line_container">
                     <div className="mb-1 fw-bold">입력</div>
-                    <div className="cominfo">{problem.input ?? '-'}</div>
+                    <div className="cominfo">{problem.input?? '-'}</div>
                   </div>
                   <div className="line_container">
                     <div className="mb-1 fw-bold">출력</div>
@@ -202,23 +224,22 @@ int main(void){
                   </div>
                 </div>
 
+                {/* 예제 입력/출력 전체 목록 */}
                 <div className="two_container">
                   <div className="line_container">
                     <div className="mb-1 fw-bold">예제 입력</div>
                     <div className="cominfo">
-                      {(problem?.testCases ?? []).map((tc, i) => {
-                        const input = tc?.inputData?.trim() ? tc.inputData : "없음";
-                        return <div key={i}>{input}</div>;
-                      })}
+                      {(problem?.testCases ?? []).map((tc, i) => (
+                        <div key={i}>{tc?.inputData?.trim() ? tc.inputData : "없음"}</div>
+                      ))}
                     </div>
                   </div>
                   <div className="line_container">
                     <div className="mb-1 fw-bold">예제 출력</div>
                     <div className="cominfo">
-                      {(problem?.testCases ?? []).map((tc, i) => {
-                        const output = tc?.expectedOutput?.trim() ? tc.expectedOutput : "없음";
-                        return <div key={i}>{output}</div>;
-                      })}
+                      {(problem?.testCases ?? []).map((tc, i) => (
+                        <div key={i}>{tc?.expectedOutput?.trim() ? tc.expectedOutput : "없음"}</div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -232,31 +253,17 @@ int main(void){
               <div className="card-header p-0">
                 <ul className="nav nav-tabs card-header-tabs">
                   <li className="nav-item">
-                    <button
-                      type="button"
-                      className={`nav-link ${tab === "submit" ? "active" : ""}`}
-                      onClick={() => setTab("submit")}
-                    >
+                    <button type="button" className={`nav-link ${tab === "submit" ? "active" : ""}`} onClick={() => setTab("submit")}>
                       <span className="tab-label">제출</span>
                     </button>
                   </li>
                   <li className="nav-item">
-                    <button
-                      type="button"
-                      className={`nav-link ${tab === "others" ? "active" : ""}`}
-                      onClick={() => setTab("others")}
-                    >
+                    <button type="button" className={`nav-link ${tab === "others" ? "active" : ""}`} onClick={() => setTab("others")}>
                       <span className="tab-label">다른사람 풀이</span>
                     </button>
                   </li>
                   <li className="nav-item">
-                    <button
-                      type="button"
-                      className={`nav-link ${tab === "result" ? "active" : ""}`}
-                      onClick={() => setTab("result")}
-                      role="tab"
-                      aria-selected={tab === "result"}
-                    >
+                    <button type="button" className={`nav-link ${tab === "result" ? "active" : ""}`} onClick={() => setTab("result")} role="tab" aria-selected={tab === "result"}>
                       <span className="tab-label">채점 결과</span>
                       {submission?.result && (
                         <span className={`badge ms-2 ${statusClass(submission.result)}`}>
@@ -277,15 +284,14 @@ int main(void){
                     </div>
                   </>
                 ) : tab === "others" ? (
-                  <div className="text-muted">
-                    아직 다른 사람 풀이가 없습니다. (추후 API 연동/목록 표 구현)
-                  </div>
+                  <div className="text-muted">아직 다른 사람 풀이가 없습니다. (추후 API 연동/목록 표 구현)</div>
                 ) : (
                   <div>
                     {submission ? (
                       <>
                         <div className="mb-2 d-flex align-items-center gap-2">
-                          <span className="badge ${statusClass(submission.result)}">
+                          {/* ✅ 템플릿 리터럴 오타 수정 */}
+                          <span className={`badge ${statusClass(submission.result)}`}>
                             {resultLabel(submission.result)}
                           </span>
                           <span className="text-muted small">({String(submission.result)})</span>
@@ -295,7 +301,6 @@ int main(void){
                           if (!submission?.result) return null;
                           const r = String(submission.result).trim().toUpperCase();
                           if (r === "SUCCESS") return null;
-
                           const msgMap = {
                             FAIL: "오답입니다. 입출력 형식(개행/공백)과 예외 케이스를 다시 확인해 보세요.",
                             COMPILE_ERROR: "컴파일 오류입니다. 문법/헤더/세미콜론, 함수 시그니처를 확인하세요.",
@@ -305,29 +310,16 @@ int main(void){
                             PENDING: "채점 대기 중입니다.",
                             JUDGING: "채점 중입니다.",
                           };
-
                           const text = msgMap[r] ?? `결과: ${r}`;
-                          const cls =
-                            r === "FAIL" || r.endsWith("ERROR") || r === "TIMEOUT" || r === "MEMORY_EXCEEDED"
-                              ? "alert alert-warning py-2"
-                              : "alert alert-info py-2";
-
+                          const cls = (r === "FAIL" || r.endsWith("ERROR") || r === "TIMEOUT" || r === "MEMORY_EXCEEDED")
+                            ? "alert alert-warning py-2" : "alert alert-info py-2";
                           return <div className={cls}>{text}</div>;
                         })()}
 
                         <div className="d-flex flex-wrap gap-3">
-                          <div>
-                            <span className="badge bg-secondary me-2">실행시간</span>
-                            {execMs != null ? `${execMs} ms` : "-"}
-                          </div>
-                          <div>
-                            <span className="badge bg-secondary me-2">메모리</span>
-                            {memKb != null ? `${memKb} KB` : "-"}
-                          </div>
-                          <div>
-                            <span className="badge bg-secondary me-2">언어</span>
-                            {submission.language ?? "c"}
-                          </div>
+                          <div><span className="badge bg-secondary me-2">실행시간</span>{execMs != null ? `${execMs} ms` : "-"}</div>
+                          <div><span className="badge bg-secondary me-2">메모리</span>{memKb != null ? `${memKb} KB` : "-"}</div>
+                          <div><span className="badge bg-secondary me-2">언어</span>{submission.language ?? "c"}</div>
                         </div>
                       </>
                     ) : (
@@ -349,15 +341,11 @@ int main(void){
               checked={sharePublic}
               onChange={(e) => setSharePublic(e.target.checked)}
             />
-            <span className="form-check-label">
-              문제를 맞힐 경우 당신의 해답을 전체공개합니다
-            </span>
+            <span className="form-check-label">문제를 맞힐 경우 당신의 해답을 전체공개합니다</span>
           </label>
 
           <div className="ms-auto d-flex align-items-center gap-2 flex-shrink-0">
-            <span className="badge bg-dark" title="페이지 진입부터 자동 측정">
-              ⏱ {formatted}
-            </span>
+            <span className="badge bg-dark" title="페이지 진입부터 자동 측정">⏱ {formatted}</span>
             <button className="btn btn-primary" onClick={handleSubmit}>제출</button>
           </div>
         </div>

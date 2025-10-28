@@ -120,7 +120,7 @@ http.interceptors.request.use((config) => {
     path.startsWith("/api/auth/refresh");
 
   // ✅ 공개(permitAll) 경로: 백엔드에서 열어둔 API —> 토큰 붙이지 않음
-  const isPublicPath = /^\/api\/(submissions?)\b/.test(path); 
+  const isPublicPath = /^\/api\/submissions\b/.test(path); 
 
   // OPTIONS는 항상 스킵
   const isOptions = (config.method || "GET").toUpperCase() === "OPTIONS";
@@ -178,7 +178,7 @@ http.interceptors.response.use(
     if (urlStr.includes("/api/auth/refresh")) throw error;
 
     // 공개 경로는 원칙적으로 토큰이 필요 없음: 여기서 refresh 루프를 타지 않도록 방지
-    const isPublicPath = /^\/api\/(submissions?)\b/.test(path);
+    const isPublicPath = /^\/api\/submissions\b/.test(path); 
     if (isPublicPath && response.status === 401) {
       // 혹시 이전 요청이 토큰을 잘못 붙여갔던 경우: 무토큰으로 1회 재시도
       if (!config._retryNoAuthOnce) {
