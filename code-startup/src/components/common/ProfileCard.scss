@@ -50,7 +50,6 @@
   align-items: flex-start;
   gap: 15px;
   padding-bottom: 14px;
-  border-bottom: 1px solid #e5e9ef; /* 밑줄 */
 }
 
 /* 이미지 + 버튼을 한 덩어리로 (가로 배치) */
@@ -120,6 +119,10 @@
   .nickname {
     color: #111827;
   }
+}
+
+.two_content + .two_content {
+  border-top: 1px solid #e5e7eb; /* 프로젝트 톤에 맞게 색상 조정 가능 */
 }
 
 /* =========================

@@ -1,9 +1,13 @@
-// src/components/profile/ProfileCard.jsx
+
+// 변경점 요약:
+// 1) fetchMyRank 제거, 대신 http.get("/api/ranking")로 전체 랭킹 받아서 내 순위 계산
+// 2) 동점(같은 totalScore) 동일 순위 처리 (standard competition ranking)
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdAddAPhoto } from "react-icons/md";
 import "./ProfileCard.scss";
 import { fetchCurrentUser } from "../../api/user";
-import { ensureAccessToken } from "../../api/http";
+import { ensureAccessToken, http } from "../../api/http"; // ⬅️ http 추가
 
 function ProfileCard({
   nickname: nicknameProp,
@@ -14,9 +18,10 @@ function ProfileCard({
   const fileInputRef = useRef(null);
 
   const [me, setMe] = useState(null);
+  const [rank, setRank] = useState(null);     // ⬅️ 순위 상태
   const [loading, setLoading] = useState(false);
   const [loadErr, setLoadErr] = useState(null);
-   const reqIdRef = useRef(0); // 최신 요청만 반영
+  const reqIdRef = useRef(0);
 
   const nickname = useMemo(
     () => nicknameProp ?? me?.nickname ?? "사용자",
@@ -44,15 +49,34 @@ function ProfileCard({
     []
   );
 
-  // me 불러오기
-  useEffect(() => {
-    // 부모가 모두 내려주면 API 호출 생략
-    const hasAllProps =
-      nicknameProp != null &&
-      profileImageUrlProp != null &&
-      totalPointsProp != null;
-    if (hasAllProps) return;
+  // ⬇️ 동점 처리 포함한 순위 계산 (standard competition ranking)
+  function computeMyRank(sortedList, myUserId) {
+    // 기대 형태: [{ id, totalScore, user: { id, ... } }, ...] desc
+    if (!Array.isArray(sortedList) || !myUserId) return null;
 
+    let currentRank = 0;      // 현재 할당할 랭크
+    let processed = 0;        // 처리한 항목 수
+    let prevScore = null;
+
+    for (const row of sortedList) {
+      processed += 1;
+      const score = row?.totalScore ?? 0;
+
+      if (prevScore === null || score !== prevScore) {
+        currentRank = processed; // 새로운 점수면 현재까지 처리한 개수 = 랭크
+        prevScore = score;
+      }
+      const rowUserId = row?.user?.id ?? row?.user_id ?? row?.userId;
+      if (rowUserId === myUserId) {
+        return currentRank; // 동점이면 동일 랭크 반환
+      }
+    }
+    return null;
+  }
+
+  // me + ranking 불러와서 순위 계산
+  useEffect(() => {
+    // 부모가 모두 내려주면 API 호출 생략 (닉/이미지/포인트만으로는 순위는 모름 → 호출 필요)
     let alive = true;
     const myReq = ++reqIdRef.current;
 
@@ -60,14 +84,27 @@ function ProfileCard({
       try {
         setLoading(true);
         setLoadErr(null);
-       await ensureAccessToken();
-        const data = await fetchCurrentUser(); // 내부에서도 한 번 더 보장 & http 인스턴스 사용
+        await ensureAccessToken();
+
+        // 1) 내 정보
+        const meData = await fetchCurrentUser(); // { id, username, nickname, ... }
         if (!alive || myReq !== reqIdRef.current) return;
-        setMe(data ?? null);
+        setMe(meData ?? null);
+
+        // 2) 전체 랭킹
+        const { data: rankingList } = await http.get("/api/ranking");
+        if (!alive || myReq !== reqIdRef.current) return;
+
+        // 안전: 혹시 정렬 보장이 없다면 점수 내림차순으로 한번 더 정렬
+        const sorted = Array.isArray(rankingList)
+          ? [...rankingList].sort((a, b) => (b?.totalScore ?? 0) - (a?.totalScore ?? 0))
+          : [];
+
+        const myRank = computeMyRank(sorted, meData?.id);
+        setRank(myRank);
       } catch (e) {
         if (!alive || myReq !== reqIdRef.current) return;
-        // ❗ 오류가 나도 기존 me는 유지 (UI가 기본값으로 내려앉지 않게)
-        setLoadErr(e?.response?.data || e?.message || "사용자 정보를 불러오지 못했습니다.");
+        setLoadErr(e?.response?.data || e?.message || "프로필/랭킹 정보를 불러오지 못했습니다.");
       } finally {
         if (alive && myReq === reqIdRef.current) setLoading(false);
       }
@@ -76,7 +113,6 @@ function ProfileCard({
     return () => {
       alive = false;
     };
-    // props로 값이 채워지면 호출 안 하므로 의존성은 그 셋만
   }, [nicknameProp, profileImageUrlProp, totalPointsProp]);
 
   const handleClickEdit = () => fileInputRef.current?.click();
@@ -93,6 +129,9 @@ function ProfileCard({
       ? totalPoints.toLocaleString()
       : totalPoints ?? 0;
 
+  const rankText =
+    Number.isFinite(rank) ? `#${Number(rank).toLocaleString()}` : "-";
+
   return (
     <aside className="profile-pane">
       <div className="profile-card">
@@ -102,10 +141,22 @@ function ProfileCard({
           <div className="two_content top">
             <div className="avatar-wrap">
               <img className="profile-image" src={avatarUrl || fallbackSvgDataUrl} alt="프로필" />
-              <button type="button" className="edit-photo-btn" onClick={handleClickEdit} aria-label="프로필 사진 변경" title="프로필 사진 변경">
+              <button
+                type="button"
+                className="edit-photo-btn"
+                onClick={handleClickEdit}
+                aria-label="프로필 사진 변경"
+                title="프로필 사진 변경"
+              >
                 <MdAddAPhoto size={18} />
               </button>
-              <input ref={fileInputRef} className="visually-hidden" type="file" accept="image/*" onChange={handleFileChange} />
+              <input
+                ref={fileInputRef}
+                className="visually-hidden"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
             </div>
 
             <div className="profile-nickname">
@@ -124,6 +175,12 @@ function ProfileCard({
             <div className="points-value">{pointsText} points</div>
           </div>
 
+          {/* 새 섹션: 내 랭킹 순위 */}
+          <div className="two_content rank">
+            <div className="points-label">랭킹 순위</div>
+            <div className="points-value">{rankText}</div>
+          </div>
+
           {loadErr && (
             <div className="profile-error" role="alert">
               {String(loadErr)}
@@ -136,5 +193,3 @@ function ProfileCard({
 }
 
 export default ProfileCard;
-
-
