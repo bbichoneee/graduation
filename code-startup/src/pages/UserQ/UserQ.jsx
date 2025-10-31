@@ -75,7 +75,7 @@ export default function UserQ() {
               onClick={() => setView("none")}
               aria-pressed={view === "none"}
             >
-              취약 문제 풀기
+              취약 문제 유형
             </button>
           </div>
         </div>

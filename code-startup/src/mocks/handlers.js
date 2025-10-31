@@ -32,7 +32,7 @@ function detectCompileError(code = "") {
   // 아주 기초적인 세미콜론 체크
   const lines = src.split(/\r?\n/).map(l => l.trim());
   for (const ln of lines) {
-    if (!ln || ln.startsWith("//") || ln.endsWith("{") || ln.endswith?.(":") || ln.endsWith("}")) continue;
+    if (!ln || ln.startsWith("//") || ln.endsWith("{") || ln.endsWith(":") || ln.endsWith("}")) continue;
     if (/^#/.test(ln)) continue; // 전처리기
     if (/^(if|for|while|switch)\b/.test(ln)) continue;
     if (/\)\s*\{?$/.test(ln)) continue; // 함수 선언 라인
@@ -63,9 +63,8 @@ function simulatePrintfOutput(code = "") {
   return out.join("");
 }
 
-/** 완전 동일 비교용 정규화 (여기선 사실상 원문 유지) */
+/** 완전 동일 비교용 정규화 */
 function norm(s) {
-  // 필요시 \r\n → \n 통일 등을 넣을 수 있음. 지금은 “완전 동일” 원칙이라 손대지 않음.
   return String(s ?? "");
 }
 
@@ -111,7 +110,7 @@ async function submissionResolver({ request }) {
   if (judge.type === "OK") result = "SUCCESS";
   if (judge.type === "CE") result = "COMPILE_ERROR";
 
-  // 4) 통계 갱신
+  // 4) 통계 갱신 (문제별)
   const key = `mock:stats:${problemId}`;
   const s = JSON.parse(localStorage.getItem(key) || '{"attempts":0,"solved":0}');
   s.attempts += 1;
@@ -141,8 +140,66 @@ async function submissionResolver({ request }) {
       memoryKb: memKb,
     })),
     stats: s,
-    // reason: judge.reason || null, // 필요 시 주석 해제해 디버깅 메시지 확인
   });
+}
+
+/* ===========================================================
+   ===== 여기부터 랭킹/유저/제출(목록) 목업 추가 =====
+   =========================================================== */
+
+const mockUsers = [
+  { id: 1, username: "alice",  nickname: "앨리스",  profileImageUrl: "/img/sample1.jpg" },
+  { id: 2, username: "bruce",  nickname: "브루스",  profileImageUrl: "/img/sample2.jpg" },
+  { id: 3, username: "charly", nickname: "찰리",   profileImageUrl: "/img/sample3.jpg" },
+  { id: 4, username: "diana",  nickname: "다이애나" },
+];
+const currentUserId = 2;
+
+const mockRanking = [
+  { id: 101, user: mockUsers[1], totalScore: 3500 },
+  { id: 102, user: mockUsers[0], totalScore: 3200 },
+  { id: 103, user: mockUsers[2], totalScore: 2800 },
+  { id: 104, user: mockUsers[3], totalScore: 1200 },
+];
+
+const submissionsByUser = {
+  1: [
+    { id: "a1", problemId: 11, problemTitle: "실수의 정수 변환", points: 10, result: "AC",      submittedAt: "2025-10-01T10:10:00Z" },
+    { id: "a2", problemId: 12, problemTitle: "문자열 뒤집기",     points: 20, result: "WA",      submittedAt: "2025-10-02T09:00:00Z" },
+    { id: "a3", problemId: 12, problemTitle: "문자열 뒤집기",     points: 20, result: "SUCCESS", submittedAt: "2025-10-02T09:10:00Z" },
+  ],
+  2: [
+    { id: "b1", problemId: 1,  problemTitle: "Hello CSU!",       points: 5,  result: "AC", submittedAt: "2025-10-03T12:00:00Z" },
+    { id: "b2", problemId: 21, problemTitle: "약수 구하기",       points: 15, result: "WA", submittedAt: "2025-10-05T14:30:00Z" },
+  ],
+  3: [
+    { id: "c1", problemId: 7,  problemTitle: "소수 판별",         points: 15, result: "WA", submittedAt: "2025-10-06T08:00:00Z" },
+  ],
+  4: [],
+};
+
+function calcStats(list) {
+  const solvedCount  = list.length;
+  const correctCount = list.filter(r => (r.result || "").toUpperCase() === "AC" || r.result === "SUCCESS").length;
+  const wrongCount   = solvedCount - correctCount;
+  return { solvedCount, correctCount, wrongCount };
+}
+
+function getQuery(req, key) {
+  const url = new URL(req.url);
+  return url.searchParams.get(key);
+}
+
+function filterByResult(list, result) {
+  const upper = (result || "").toUpperCase();
+  if (!upper || upper === "ALL") return list;
+  if (upper === "AC" || upper === "SUCCESS") {
+    return list.filter(r => (r.result || "").toUpperCase() === "AC" || r.result === "SUCCESS");
+  }
+  if (upper === "WA") {
+    return list.filter(r => (r.result || "").toUpperCase() !== "AC" && r.result !== "SUCCESS");
+  }
+  return list;
 }
 
 /* ===================== 라우팅 등록 ===================== */
@@ -166,7 +223,66 @@ export const handlers = [
     return HttpResponse.json(value);
   }),
 
-  // 제출
+  // 제출(단건 채점)
   http.post("/api/submission", submissionResolver),
   http.post("/api/submit",     submissionResolver),
+
+  // ===== 랭킹/유저/제출 목록 API (추가) =====
+  // 현재 로그인 유저
+  http.get("/api/users/me", async () => {
+    if (!USE_MOCK) return passthrough();
+    const me = mockUsers.find(u => u.id === currentUserId);
+    if (!me) return HttpResponse.json(null, { status: 401 });
+    const r = mockRanking.find(r => r.user.id === me.id);
+    await delay(120);
+    return HttpResponse.json({ ...me, totalPoints: r?.totalScore ?? 0 });
+  }),
+
+  // 내 통계
+  http.get("/api/users/me/stats", async () => {
+    if (!USE_MOCK) return passthrough();
+    const list = submissionsByUser[currentUserId] || [];
+    await delay(120);
+    return HttpResponse.json(calcStats(list));
+  }),
+
+  // 특정 유저 통계
+  http.get("/api/users/:id/stats", async ({ params }) => {
+    if (!USE_MOCK) return passthrough();
+    const id = Number(params.id);
+    const list = submissionsByUser[id] || [];
+    await delay(120);
+    return HttpResponse.json(calcStats(list));
+  }),
+
+  // 내 제출 히스토리
+  http.get("/api/submissions/me", async ({ request }) => {
+    if (!USE_MOCK) return passthrough();
+    const result = getQuery(request, "result"); // all|ac|wa
+    const limit  = Number(getQuery(request, "limit")) || 200;
+    const all = submissionsByUser[currentUserId] || [];
+    const filtered = filterByResult(all, result).slice(0, limit);
+    await delay(120);
+    return HttpResponse.json(filtered);
+  }),
+
+  // 특정 유저 제출 히스토리
+  http.get("/api/submissions", async ({ request }) => {
+    if (!USE_MOCK) return passthrough();
+    const userId = Number(getQuery(request, "userId"));
+    const result = getQuery(request, "result");
+    const limit  = Number(getQuery(request, "limit")) || 200;
+    const all = submissionsByUser[userId] || [];
+    const filtered = filterByResult(all, result).slice(0, limit);
+    await delay(120);
+    return HttpResponse.json(filtered);
+  }),
+
+  // 랭킹
+  http.get("/api/ranking", async () => {
+    if (!USE_MOCK) return passthrough();
+    // totalScore desc 라고 가정
+    await delay(120);
+    return HttpResponse.json(mockRanking);
+  }),
 ];

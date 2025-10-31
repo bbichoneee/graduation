@@ -17,7 +17,7 @@ import Qbank from "./pages/Qbank/Qbank.jsx";
 import Ranking from "./pages/Ranking/Ranking.jsx";
 import SolveQ from "./pages/SolveQ/SolveQ.jsx";
 import UserQ from "./pages/UserQ/UserQ.jsx";
-import VulnerableQ from "./pages/VulnerableQ/VulnerableQ.jsx";
+
 
 // 토큰 스토어 (로컬스토리지 accessToken 확인)
 import { tokenStore } from "./api/http.js";
@@ -52,7 +52,6 @@ const MyRoutes = () => {
         <Route path="/diffqsolutionlist" element={<DiffQSolutionList />} />
         <Route path="/diffqsolutionlook" element={<DiffQSolutionLook />} />
         <Route path="/solveq/:id" element={<SolveQ />} />
-        <Route path="/vulnerableq" element={<VulnerableQ />} />
       </Route>
 
       {/* fallback */}

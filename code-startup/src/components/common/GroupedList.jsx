@@ -12,14 +12,13 @@ const LEVEL_LABEL = (n) => `난이도 ${n}`;
 export default function GroupedList({
   problems = [],
   userProgressById = {},
-  defaultOpenFirst = true,
-  groupMode = "unit", // "unit" | "level"
+  defaultOpenFirst = false,       // ✅ 기본값: 처음에도 닫힘
+  groupMode = "unit",             // "unit" | "level"
 }) {
   const list = Array.isArray(problems) ? problems : [];
 
   // ── 그룹핑 ─────────────────────────────────────────────
   const grouped = useMemo(() => {
-    // ✅ 유형 모드: 기존 로직 유지
     if (groupMode === "unit") {
       const map = new Map(); // groupName -> [{problem, status}]
       for (const p of list) {
@@ -48,7 +47,6 @@ export default function GroupedList({
 
     for (const p of list) {
       const status = userProgressById[p.id] ?? "unattempted";
-      // 레벨이 없거나 이상하면 1~5로 보정
       const raw = Number(p.level ?? 1);
       const level = Number.isFinite(raw) ? Math.min(5, Math.max(1, raw)) : 1;
       map.get(LEVEL_LABEL(level)).push({ problem: p, status });
@@ -69,7 +67,7 @@ export default function GroupedList({
       const order = (label) => {
         const m = String(label).match(/(\d+)/);
         return m ? Number(m[1]) : 9999;
-      };
+        };
       return arr.sort((a, b) => order(a[0]) - order(b[0]));
     }
     // 유형은 한국어/숫자 정렬
@@ -82,15 +80,16 @@ export default function GroupedList({
     return <div className="text-center text-muted py-5">표시할 문제가 없습니다.</div>;
   }
 
-  // ── 렌더 ──────────────────────────────────────────────
+  // ✅ 정렬 버튼을 눌러 groupMode가 바뀌는 순간
+  //    key에 groupMode를 섞어 TypeGroup을 강제 리마운트 → 전부 닫힌 상태로 초기화
   return (
     <div className="container-fluid py-3">
-      {entries.map(([groupName, items], idx) => (
+      {entries.map(([groupName, items]) => (
         <TypeGroup
-          key={groupName}
+          key={`${groupMode}::${groupName}`}   // ⬅️ groupMode 포함
           typeName={groupName}
           items={items}
-          defaultOpen={defaultOpenFirst && idx === 0}
+          defaultOpen={false}                  // ⬅️ 항상 닫힘으로 시작
         />
       ))}
     </div>

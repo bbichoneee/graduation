@@ -133,7 +133,6 @@ function ProfileCard({
     Number.isFinite(rank) ? `#${Number(rank).toLocaleString()}` : "-";
 
   return (
-    <aside className="profile-pane">
       <div className="profile-card">
         <div className="profile-header">내 프로필</div>
 
@@ -164,7 +163,7 @@ function ProfileCard({
                 <span className="nickname">불러오는 중...</span>
               ) : (
                 <>
-                  <span className="nickname">{nickname}</span>님
+                  <span className="nickname">"{nickname}"</span>님
                 </>
               )}
             </div>
@@ -181,14 +180,8 @@ function ProfileCard({
             <div className="points-value">{rankText}</div>
           </div>
 
-          {loadErr && (
-            <div className="profile-error" role="alert">
-              {String(loadErr)}
-            </div>
-          )}
         </div>
       </div>
-    </aside>
   );
 }
 

@@ -1,16 +1,12 @@
 @import "/src/styles/main.scss";
 
-/* 메뉴바 높이를 바꿔 쓰고 싶으면 프로젝트 공통 변수로 덮어써도 됩니다 */
-:root {
-  --menubar-height: 64px;
-}
+
 
 .profile-pane {
-  width: 30%;
   min-width: 300px;
-  height: calc(100vh - var(--menubar-height));
-  position: sticky;
-  top: var(--menubar-height);
+  height:100%;
+  position : sticky;
+  top : 80px;
   padding: 12px;
   box-sizing: border-box;
 }
@@ -52,6 +48,26 @@
   padding-bottom: 14px;
 }
 
+/* 화면이 반쯤(대략 노트북 폭 이하)로 줄면 닉네임을 아래로 */
+@media (max-width: 1250px) { 
+  .two_content.top {
+    align-items: center;
+    flex-wrap: wrap;               /* ⬅️ 줄바꿈 허용 */
+  }
+
+  .two_content.top .avatar-wrap {
+    order: 1;                      /* 위(첫 줄) */
+  }
+
+  .two_content.top .profile-nickname {
+    order: 2;                      /* 아래(둘째 줄) */
+    flex: 1 0 100%;                /* ⬅️ 한 줄 전체 폭 차지 */
+    margin-top: 6px;
+    /* 옵션: 가운데 정렬 원하면 아래 한 줄을 추가 */
+    /* text-align: center; */
+  }
+}
+
 /* 이미지 + 버튼을 한 덩어리로 (가로 배치) */
 .avatar-wrap {
   display: inline-flex;
@@ -67,8 +83,8 @@
 
 /* 프로필 이미지 */
 .profile-image {
-  width: 140px;
-  height: 140px;
+  width: 100px;
+  height: 100px;
   object-fit: cover;
   background: #f2f4f6;
   border-radius: 10px;
@@ -115,6 +131,7 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
+  margin-left : auto;
 
   .nickname {
     color: #111827;
@@ -136,6 +153,14 @@
   padding-top: 6px; /* 밑줄과 살짝 간격 */
 }
 
+.two_content.rank{
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+  gap: 15px;
+  padding-top: 6px; /* 밑줄과 살짝 간격 */
+}
+
 .points-label {
   font-size: 1rem;
 }
@@ -144,16 +169,9 @@
   font-weight: 700;
   font-size: 1.25rem;
   color: #334155;
-  align-self: end;
+  margin-left : auto;
 }
 
-/* (옵션) 하단 통계 카드 스타일 – 필요 없으면 삭제 가능 */
-.two_content.bottom {
-  margin-top: 8px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
 
 .stat {
   background: #f7f9fb;

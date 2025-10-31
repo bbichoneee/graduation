@@ -16,14 +16,81 @@
 .carousel-80vh .carousel-item img {
   width: 100%;
   height: 100%;
-  object-fit: cover;       // 비율 유지 + 잘라내기
+  object-fit : cover;       // 비율 유지 + 잘라내기
   object-position: center; // 자를 기준 (원하면 top/center 조정)
 }
 
-.user_item{
-  width : 100vw;
-  height : 4rem;
-  background-color: aquamarine;
-  font-family : $font-main;
-  font-size : 25px;
+.user_item {
+  width: 100vw;
+  height: 4rem;
+  background-color: rgb(224, 224, 224);
+  font-family: $font-main;
+  font-size: 25px;
+
+  // ✅ 리본 내부 레이아웃
+  .user_ribbon {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-inline: 1rem;
+    line-height: 1;
+    white-space: nowrap; // 얇은 띠에서 줄바꿈 방지
+  }
+
+  .user_ribbon__avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 10px;
+    object-fit: cover;
+    flex: 0 0 auto;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.6);
+    background: #eee;
+  }
+
+  .user_ribbon__name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .user_ribbon__divider {
+    opacity: 0.5;
+    font-size: 0.95rem;
+    margin-inline: 0.125rem;
+  }
+
+  .user_ribbon__points {
+    font-size: 0.95rem;
+    strong {
+      font-weight: 700;
+    }
+  }
+
+  .user_ribbon__guest,
+  .user_ribbon__error {
+    font-size: 0.95rem;
+  }
+
+  /* 로딩 스켈레톤 */
+  .user_ribbon__skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.35) 25%, rgba(255,255,255,0.6) 37%, rgba(255,255,255,0.35) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.2s infinite;
+    border-radius: 6px;
+
+    &.avatar {
+      width: 2.75rem; height: 2.75rem; border-radius: 50%;
+    }
+    &.name {
+      width: 8rem; height: 1rem;
+    }
+    &.points {
+      width: 5rem; height: 1rem;
+    }
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+  }
 }

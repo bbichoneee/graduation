@@ -1,6 +1,5 @@
-
-import  { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import  { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { NavLink, useLocation, Link } from "react-router-dom";
 import './MenuBar.scss'
 
 /**
@@ -51,7 +50,7 @@ export default function MenuBar({
     const innerRect = inner.getBoundingClientRect();
     const firstRect = first.getBoundingClientRect();
 
-    // 메뉴 첫 번째 요소의 왼쪽 남는 전체 너비 (로고 + 간격 포함)
+    // 메뉴 첫 번째 요소의 왼쪽 남는 전체 너비 (로고 + 간격 + 여분 공간 포함)
     const baseLeft = Math.max(0, firstRect.left - innerRect.left);
 
     if (idx < 0) return Math.min(baseLeft, inner.clientWidth);
@@ -88,8 +87,8 @@ export default function MenuBar({
   // 창 크기 변경 시 재측정 (디바운스: rAF)
   useEffect(() => {
      if (document.fonts?.ready) {
-    document.fonts.ready.then(() => setProgressPx(calcProgressPx(activeIndex)));
-    }
+      document.fonts.ready.then(() => setProgressPx(calcProgressPx(activeIndex)));
+     }
     let rafId;
     const onResize = () => {
       cancelAnimationFrame(rafId);
@@ -105,9 +104,17 @@ export default function MenuBar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeIndex]);
 
+  // ✅ 오른쪽 메뉴 활성화 시 우측 정렬 플래그
+  const isRightAligned = activeIndex === MENUS.length - 1;
+
   return (
     <header className="csu-nav">
-      <div className="csu-nav__inner" ref={innerRef}>
+      <div
+        className={
+          "csu-nav__inner" + (isRightAligned ? " is-right-aligned" : "")
+        }
+        ref={innerRef}
+      >
         {/* 뒤쪽에 깔리는 '하나의 체력바' (너비: px 단위) */}
         <div
           className="csu-nav__progress"
@@ -120,9 +127,10 @@ export default function MenuBar({
           }}
         />
 
-        <div className="csu-nav__logo" aria-label="사이트 로고">
-            <img src={logoSrc} alt="사이트 로고" />
-        </div>
+        {/* 로고 → 홈 이동 */}
+        <Link to="/" className="csu-nav__logo" aria-label="사이트 로고">
+          <img src={logoSrc} alt="사이트 로고" />
+        </Link>
 
         <nav className="csu-nav__menu" aria-label="주 메뉴">
           {MENUS.map((m, i) => (

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import MenuBar from "../../components/common/MenuBar";
-import ProfileCard from "../../components/common/ProfileCard"; // 대소문자 주의
+import ProfileCard from "../../components/common/Profilecard";
 import { http } from "../../api/http";
 import "./MyPage.scss";
 
@@ -65,8 +65,6 @@ export default function MyPage() {
 
             {loading ? (
               <div className="skeleton">로딩 중…</div>
-            ) : loadErr ? (
-              <div className="error">불러오기 실패: {String(loadErr)}</div>
             ) : (
               <div className="stats-grid">
                 <div className="stat">
@@ -80,6 +78,10 @@ export default function MyPage() {
                 <div className="stat">
                   <div className="label">틀린 문제 수</div>
                   <div className="value value--bad">{stats.wrongCount}</div>
+                </div>
+                <div className="stat">
+                  <div className="label">정답률</div>
+                  <div className="value">{stats.solvedCount > 0 ? ((stats.correctCount / stats.solvedCount) * 100).toFixed(2) + "%" : "0%"}</div>
                 </div>
               </div>
             )}

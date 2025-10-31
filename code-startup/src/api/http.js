@@ -28,18 +28,27 @@ export const tokenStore = { getAccess, getRefresh, setTokens, USE_MOCK };
 
 /** ====== Axios 인스턴스 ====== */
 export const http = axios.create({
-  baseURL: API_BASE,
-  withCredentials: true, // ★ 서버와 쿠키 주고받기 허용
-  // timeout: 15000,
+  baseURL: USE_MOCK ? "" : (import.meta.env.VITE_API_BASE_URL || ""), // mock=1이면 동일오리진
+  withCredentials: true,
 });
 
-/** ====== 리프레시 시도 함수 (쿠키 기반) ====== */
+/** ====== 리프레시 시도 함수 (localStorage 기반) ====== */
 async function tryRefreshReal() {
+  const refreshToken = getRefresh();
+  if (!refreshToken) {
+    console.warn("[REFRESH] No refreshToken in localStorage");
+    return false;
+  }
+
   try {
-    const res = await axios.post(`${API_BASE}/api/auth/refresh`, null, {
-      withCredentials: true,                      // ★ refresh_token 쿠키로 처리
-      validateStatus: (s) => s >= 200 && s < 500 // 4xx를 throw하지 않게
-    });
+    const res = await axios.post(
+      `${API_BASE}/api/auth/refresh`,
+      { refreshToken }, // body에 RT를 실어 전송
+      {
+        withCredentials: true, // 혹시 모르니 유지
+        validateStatus: (s) => s >= 200 && s < 500,
+      }
+    );
 
     if (res.status !== 200) {
       console.warn("[REFRESH] status", res.status, res.data);
@@ -133,7 +142,10 @@ http.interceptors.request.use((config) => {
   // 헤더 준비
   config.headers = config.headers || {};
 
-  if (isOptions || isAuthPath || isPublicPath) {
+  // '/api/.../me' 형태의 경로는 보호 API로 간주
+  const isMePath = path.endsWith("/me");
+
+  if (!isMePath && (isOptions || isAuthPath || isPublicPath)) {
     // 이 요청에는 Authorization 헤더 제거 (잘못된 AT가 붙어 401 나는 경우 방지)
     if (config.headers.Authorization) delete config.headers.Authorization;
     return config;
