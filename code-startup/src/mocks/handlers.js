@@ -63,9 +63,9 @@ function simulatePrintfOutput(code = "") {
   return out.join("");
 }
 
-/** 완전 동일 비교용 정규화 */
+/** 완전 동일 비교용 정규화 (공백/개행 무시) */
 function norm(s) {
-  return String(s ?? "");
+  return String(s ?? "").trim();
 }
 
 /** 결정적 판정: OK/WA/CE 반환 */
@@ -87,6 +87,9 @@ function isCorrectMock(problem, code) {
 
 /* ===================== 제출 공용 resolver ===================== */
 
+// 모의 제출 저장소 (인메모리)
+const mockSubmissions = new Map(); // submissionId -> submissionObject
+
 async function submissionResolver({ request }) {
   if (!USE_MOCK) return HttpResponse.passthrough();
 
@@ -104,102 +107,78 @@ async function submissionResolver({ request }) {
   // 2) 문제 찾기(없으면 body의 testCases로 대체)
   const p = findProblemById(problemId) || { testCases };
 
-  // 3) 판정 실행
-  const judge = isCorrectMock(p, code);  // { type: 'OK' | 'WA' | 'CE', reason? }
-  let result = "FAIL";
-  if (judge.type === "OK") result = "SUCCESS";
-  if (judge.type === "CE") result = "COMPILE_ERROR";
-
-  // 4) 통계 갱신 (문제별)
-  const key = `mock:stats:${problemId}`;
-  const s = JSON.parse(localStorage.getItem(key) || '{"attempts":0,"solved":0}');
-  s.attempts += 1;
-  if (result === "SUCCESS") s.solved += 1;
-  localStorage.setItem(key, JSON.stringify(s));
-
-  // 5) 데모용 리소스/시간 값 (성공일 때만 임의 부여)
-  const execMs = result === "SUCCESS" ? Math.floor(10 + Math.random() * 30) : 0;
-  const memKb  = result === "SUCCESS" ? Math.floor(200 + Math.random() * 100) : 0;
-
-  await delay(250);
-  return HttpResponse.json({
+  // 3) 초기 제출 객체 생성 (PENDING 상태)
+  const newSubmission = {
     id: crypto.randomUUID(),
-    result,
+    problemId,
+    code,
     language,
-    executionTimeMs: execMs,
-    memoryUsageKb: memKb,
-    usedMs: usedMs ?? null,
-    sharePublic: !!sharePublic,
-    cases: (p.testCases || []).map((tc, i) => ({
-      idx: i,
-      status:
-        result === "SUCCESS"
-          ? "Accepted"
-          : (judge.type === "CE" ? "Compilation Error" : "Wrong Answer"),
-      timeMs: execMs,
-      memoryKb: memKb,
-    })),
-    stats: s,
-  });
+    usedMs,
+    sharePublic,
+    result: "PENDING", // Initial status
+    executionTimeMs: 0,
+    memoryUsageKb: 0,
+    cases: [],
+    submittedAt: new Date().toISOString(),
+  };
+  mockSubmissions.set(newSubmission.id, newSubmission);
+
+  await delay(100); // Simulate network latency for initial submission
+  return HttpResponse.json(newSubmission);
 }
 
-/* ===========================================================
-   ===== 여기부터 랭킹/유저/제출(목록) 목업 추가 =====
-   =========================================================== */
+// 제출 결과 폴링 핸들러
+async function fetchSubmissionResultMock({ params }) {
+  if (!USE_MOCK) return HttpResponse.passthrough();
 
-const mockUsers = [
-  { id: 1, username: "alice",  nickname: "앨리스",  profileImageUrl: "/img/sample1.jpg" },
-  { id: 2, username: "bruce",  nickname: "브루스",  profileImageUrl: "/img/sample2.jpg" },
-  { id: 3, username: "charly", nickname: "찰리",   profileImageUrl: "/img/sample3.jpg" },
-  { id: 4, username: "diana",  nickname: "다이애나" },
-];
-const currentUserId = 2;
+  const submissionId = params.id;
+  let submission = mockSubmissions.get(submissionId);
 
-const mockRanking = [
-  { id: 101, user: mockUsers[1], totalScore: 3500 },
-  { id: 102, user: mockUsers[0], totalScore: 3200 },
-  { id: 103, user: mockUsers[2], totalScore: 2800 },
-  { id: 104, user: mockUsers[3], totalScore: 1200 },
-];
-
-const submissionsByUser = {
-  1: [
-    { id: "a1", problemId: 11, problemTitle: "실수의 정수 변환", points: 10, result: "AC",      submittedAt: "2025-10-01T10:10:00Z" },
-    { id: "a2", problemId: 12, problemTitle: "문자열 뒤집기",     points: 20, result: "WA",      submittedAt: "2025-10-02T09:00:00Z" },
-    { id: "a3", problemId: 12, problemTitle: "문자열 뒤집기",     points: 20, result: "SUCCESS", submittedAt: "2025-10-02T09:10:00Z" },
-  ],
-  2: [
-    { id: "b1", problemId: 1,  problemTitle: "Hello CSU!",       points: 5,  result: "AC", submittedAt: "2025-10-03T12:00:00Z" },
-    { id: "b2", problemId: 21, problemTitle: "약수 구하기",       points: 15, result: "WA", submittedAt: "2025-10-05T14:30:00Z" },
-  ],
-  3: [
-    { id: "c1", problemId: 7,  problemTitle: "소수 판별",         points: 15, result: "WA", submittedAt: "2025-10-06T08:00:00Z" },
-  ],
-  4: [],
-};
-
-function calcStats(list) {
-  const solvedCount  = list.length;
-  const correctCount = list.filter(r => (r.result || "").toUpperCase() === "AC" || r.result === "SUCCESS").length;
-  const wrongCount   = solvedCount - correctCount;
-  return { solvedCount, correctCount, wrongCount };
-}
-
-function getQuery(req, key) {
-  const url = new URL(req.url);
-  return url.searchParams.get(key);
-}
-
-function filterByResult(list, result) {
-  const upper = (result || "").toUpperCase();
-  if (!upper || upper === "ALL") return list;
-  if (upper === "AC" || upper === "SUCCESS") {
-    return list.filter(r => (r.result || "").toUpperCase() === "AC" || r.result === "SUCCESS");
+  if (!submission) {
+    return new HttpResponse("Not Found", { status: 404 });
   }
-  if (upper === "WA") {
-    return list.filter(r => (r.result || "").toUpperCase() !== "AC" && r.result !== "SUCCESS");
+
+  // Simulate judging process
+  if (submission.result === "PENDING" || submission.result === "JUDGING") {
+    await delay(1000 + Math.random() * 1000); // Simulate judging time (1-2 seconds)
+
+    // Perform actual mock judging
+    const p = findProblemById(submission.problemId) || { testCases: submission.testCases };
+    const judge = isCorrectMock(p, submission.code);
+
+    let result = "FAIL";
+    if (judge.type === "OK") result = "SUCCESS";
+    if (judge.type === "CE") result = "COMPILE_ERROR";
+
+    const execMs = result === "SUCCESS" ? Math.floor(10 + Math.random() * 30) : 0;
+    const memKb  = result === "SUCCESS" ? Math.floor(200 + Math.random() * 100) : 0;
+
+    submission = {
+      ...submission,
+      result,
+      executionTimeMs: execMs,
+      memoryUsageKb: memKb,
+      cases: (p.testCases || []).map((tc, i) => ({
+        idx: i,
+        status:
+          result === "SUCCESS"
+            ? "Accepted"
+            : (judge.type === "CE" ? "Compilation Error" : "Wrong Answer"),
+        timeMs: execMs,
+        memoryKb: memKb,
+      })),
+    };
+    mockSubmissions.set(submissionId, submission);
+
+    // Update problem stats (optional, as in original submissionResolver)
+    const key = `mock:stats:${submission.problemId}`;
+    const s = JSON.parse(localStorage.getItem(key) || '{"attempts":0,"solved":0}');
+    s.attempts += 1;
+    if (result === "SUCCESS") s.solved += 1;
+    localStorage.setItem(key, JSON.stringify(s));
   }
-  return list;
+
+  return HttpResponse.json(submission);
 }
 
 /* ===================== 라우팅 등록 ===================== */
@@ -236,6 +215,16 @@ export const handlers = [
     const r = mockRanking.find(r => r.user.id === me.id);
     await delay(120);
     return HttpResponse.json({ ...me, totalPoints: r?.totalScore ?? 0 });
+  }),
+
+  // 특정 유저 정보
+  http.get("/api/users/:id", async ({ params }) => {
+    if (!USE_MOCK) return passthrough();
+    const user = mockUsers.find(u => u.id === Number(params.id));
+    if (!user) return new HttpResponse("Not Found", { status: 404 });
+    const r = mockRanking.find(r => r.user.id === user.id);
+    await delay(120);
+    return HttpResponse.json({ ...user, totalPoints: r?.totalScore ?? 0 });
   }),
 
   // 내 통계
@@ -282,7 +271,35 @@ export const handlers = [
   http.get("/api/ranking", async () => {
     if (!USE_MOCK) return passthrough();
     // totalScore desc 라고 가정
+    const responseData = mockRanking.map((r, index) => ({
+      rank: index + 1,
+      userId: r.user.id,
+      nickname: r.user.nickname,
+      level: r.user.level || 1, // Assuming default level 1 if not specified in mockUsers
+      points: r.totalScore,
+      profileImageUrl: r.user.profileImageUrl
+    }));
     await delay(120);
-    return HttpResponse.json(mockRanking);
+    return HttpResponse.json(responseData);
+  }),
+
+  http.get("/api/ranking/me", async () => {
+    if (!USE_MOCK) return passthrough();
+    const me = mockUsers.find(u => u.id === currentUserId);
+    const myRank = mockRanking.find(r => r.user.id === currentUserId);
+    const myRankIndex = mockRanking.findIndex(r => r.user.id === currentUserId);
+
+    if (!myRank) {
+      return HttpResponse.json(null);
+    }
+
+    const response = {
+      rank: myRankIndex + 1,
+      totalScore: myRank.totalScore,
+      user: me
+    };
+
+    await delay(100);
+    return HttpResponse.json(response);
   }),
 ];

@@ -21,7 +21,7 @@ const toNum = (v) => {
 };
 
 export default function ProblemListItem({ problem, status = "unattempted" }) {
-  const { id, title } = problem;
+  const { id, title, orderNum } = problem;
   const level = toNum(problem.level);
   const badge = statusBadge(status);
   const uppoint = toNum(problem.uppoint);  
@@ -29,7 +29,7 @@ export default function ProblemListItem({ problem, status = "unattempted" }) {
   return (
     <div className="problem-row">
       {/* 1열: 문제 번호 */}
-      <div className="problem-cell problem-cell--no">#{id}</div>
+      <div className="problem-cell problem-cell--no">#{orderNum}</div>
 
       {/* 2열: 제목 + 상태 배지 */}
       <div className="problem-cell problem-cell--title">
@@ -59,9 +59,9 @@ export default function ProblemListItem({ problem, status = "unattempted" }) {
 
        {/* ✅ 행 전체를 덮는 투명 링크 */}
       <Link
-        to={`/solveq/${id}`}
+        to={`/solveq/${orderNum}`}
         className="problem-row__link"
-        aria-label={`문제 ${id} ${title} 페이지로 이동`}
+        aria-label={`문제 ${orderNum} ${title} 페이지로 이동`}
       />
     </div>
   );

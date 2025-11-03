@@ -23,3 +23,31 @@ export async function fetchCurrentUser() {
   });
   return res.data;
 }
+
+/**
+ * 특정 사용자 정보 조회 (/api/users/{userId})
+ */
+export async function fetchUserById(userId) {
+  const at = await ensureAccessToken();
+  if (!at) {
+    throw new Error("로그인이 필요합니다. (accessToken 없음)");
+  }
+  const res = await http.get(`/api/users/${userId}`, {
+    headers: { Authorization: `Bearer ${at}` },
+  });
+  return res.data;
+}
+
+/**
+ * 특정 사용자의 취약 문제 유형 조회 (/api/users/{userId}/weakest-type)
+ */
+export async function fetchWeakestProblemType(userId) {
+  const at = await ensureAccessToken();
+  if (!at) {
+    throw new Error("로그인이 필요합니다. (accessToken 없음)");
+  }
+  const res = await http.get(`/api/users/${userId}/weakest-type`, {
+    headers: { Authorization: `Bearer ${at}` },
+  });
+  return res.data;
+}

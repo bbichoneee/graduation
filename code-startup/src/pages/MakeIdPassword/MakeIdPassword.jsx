@@ -37,9 +37,9 @@ export default function MakeIdPassword() {
     try {
       const draft = loadDraft(); // { nickname, profileImageUrl }
 
-      // dataURL 방지 + 닉네임 보정
-      let img = draft.profileImageUrl || "/img/default_profile.png";
-      if (img && img.startsWith("data:")) img = "/img/default_profile.png";
+      // profileImageUrl은 MakeProfile에서 이미 처리되었으므로 그대로 사용
+      // null 또는 빈 문자열이 올 수 있음
+      const profileImageUrl = draft.profileImageUrl || null; // Ensure it's null if empty string
 
       let nick = (draft.nickname || "").trim();
       if (!nick || nick === "사용자" || nick.length < 2) {
@@ -50,8 +50,10 @@ export default function MakeIdPassword() {
         username: username.trim(),
         password: pwd,
         nickname: nick,
-        profileImageUrl: img,
+        profileImageUrl: profileImageUrl,
       };
+
+      console.log("Sending signup payload:", payload); // Add this line
 
       await signUp(payload);                  // 회원가입
       await login({ username: payload.username, password: pwd }); // 자동 로그인

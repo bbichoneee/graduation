@@ -2,12 +2,6 @@
 import { http } from "./http";
 
 /* ---------- helpers ---------- */
-const mapDifficultyToLevel = (d) => {
-  if (!d) return null;
-  const m = String(d).toUpperCase().match(/(\d+)/);
-  return m ? Number(m[1]) : null;
-};
-
 const parseTestCases = (raw) => {
   if (Array.isArray(raw)) return raw;
   if (typeof raw === "string") {
@@ -19,41 +13,20 @@ const parseTestCases = (raw) => {
   return [];
 };
 
-// testCases 기반으로 input/output 설명 유추
-const deriveInputOutputFromTestCases = (testCases) => {
-  const hasAnyInput = testCases.some(tc => (tc?.inputData ?? "").trim().length > 0);
-  const input = hasAnyInput ? "예제를 참고하세요." : "입력은 없다.";
-  const output = "예제를 참고하세요.";
-  return { input, output };
-};
-
 const adaptProblem = (raw) => {
-  const tcRaw = raw?.testCasesJson ?? raw?.testCases;
-  const testCases = parseTestCases(tcRaw).map((tc) => ({
-    inputData: tc?.inputData ?? "",
-    expectedOutput: tc?.expectedOutput ?? "",
-    isSample: !!tc?.isSample,
-  }));
-
-  const { input, output } = deriveInputOutputFromTestCases(testCases);
+  const testCases = parseTestCases(raw?.testCases ?? raw?.testCasesJson ?? '[]');
 
   return {
     id: raw.id,
+    orderNum: raw.orderNum, // Add orderNum for display
     title: raw.title,
     description: raw.description,
-
-    // 서버에 없으므로 testCases로 유추
-    input,
-    output,
-
-    level: mapDifficultyToLevel(raw?.difficulty),
-    // score가 0으로 내려오면 화면엔 '-'로 보이도록 null 처리(선택)
-    uppoint: raw?.score && raw.score > 0 ? raw.score : null,
-
+    input: raw.input || '입력 정보가 없습니다.', // Use direct field from API
+    output: raw.output || '출력 정보가 없습니다.', // Use direct field from API
+    level: (raw.level && raw.level > 0) ? raw.level : 1,
+    uppoint: raw.uppoint ?? 0,
+    tags: Array.isArray(raw.tags) && raw.tags.length > 0 ? raw.tags : ["기타"],
     testCases,
-    // 서버에 tags가 없으면 기본값
-    tags: Array.isArray(raw?.tags) ? raw.tags : ["기타"],
-
     _raw: raw,
   };
 };
@@ -65,17 +38,17 @@ export async function fetchProblems() {
   return rows.map(adaptProblem);
 }
 
-export async function fetchProblemById(id) {
-  const { data } = await http.get(`/api/problems/${id}`);
+export async function fetchProblemByOrderNum(orderNum) {
+  const { data } = await http.get(`/api/problems/${orderNum}`);
   return adaptProblem(data);
 }
 
 /* ---------- (옵션) 통계 ---------- */
 const USE_STATS = import.meta.env.VITE_USE_STATS_API !== "0";
-export async function fetchProblemStats(id) {
+export async function fetchProblemStats(orderNum) {
   if (!USE_STATS) return { solved: 0, attempts: 0, rate: null, available: false };
   try {
-    const { data } = await http.get(`/api/problems/${id}/stats`);
+    const { data } = await http.get(`/api/problems/${orderNum}/stats`);
     const solved = Number(data?.solved ?? 0);
     const attempts = Number(data?.attempts ?? 0);
     const rate = typeof data?.rate === "number" ? data.rate : (attempts > 0 ? solved / attempts : null);
@@ -86,3 +59,12 @@ export async function fetchProblemStats(id) {
     throw err;
   }
 }
+
+/**
+ * 오늘의 문제 조회 (/api/daily/today)
+ */
+export async function fetchDailyProblem() {
+  const { data } = await http.get("/api/daily/today");
+  return data; // Returns DailyProblemResponse
+}
+

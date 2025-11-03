@@ -6,3 +6,10 @@ export async function fetchRanking() {
   // 예상 응답: [{ id, totalScore, user: { id, username, nickname, profileImageUrl } }, ...]
   return res.data ?? [];
 }
+
+/** 내 랭킹 조회 */
+export async function fetchMyRank() {
+  const res = await http.get("/api/ranking/me");
+  // 예상 응답: { rank, totalScore, user: { ... } }
+  return res.data;
+}

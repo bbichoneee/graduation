@@ -71,12 +71,10 @@ function sanitizeSignupPayload(p) {
   let username = t(p.username);
   let password = t(p.password);
   let nickname = t(p.nickname);
-  let profileImageUrl = t(p.profileImageUrl);
+  // profileImageUrl은 MakeProfile에서 이미 처리되었으므로 그대로 사용
+  // null 또는 외부 URL이 올 수 있음
+  let profileImageUrl = p.profileImageUrl; // No trimming here, keep as is (null or string)
 
-  // dataURL 금지 → 기본 이미지로
-  if (profileImageUrl && profileImageUrl.startsWith("data:")) {
-    profileImageUrl = "/img/default_profile.png";
-  }
   // 닉네임 보정
   if (!nickname || nickname === "사용자" || nickname.length < 2) {
     nickname = `사용자_${Math.random().toString(36).slice(2, 6)}`;

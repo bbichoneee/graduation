@@ -128,13 +128,7 @@ http.interceptors.request.use((config) => {
     path.startsWith("/api/auth/signup") ||
     path.startsWith("/api/auth/refresh");
 
-  /**
-   * ✅ 공개(permitAll) 경로: 백엔드에서 열어둔 API —> Authorization 헤더 제거
-   *  - /api/problems/** (문제 목록/상세)
-   *  - /api/submissions/** (복수형)
-   *  - /api/submission/**  (단수형 컨트롤러 대비)
-   */
-  const isPublicPath = /^\/api\/(problems(?:\/.*)?|submissions(?:\/.*)?|submission(?:\/.*)?)\b/i.test(path);
+  const isPublicPath = /^\/api\/(problems(?:\/.*)?)\b/i.test(path);
 
   // OPTIONS는 항상 스킵
   const isOptions = method === "OPTIONS";

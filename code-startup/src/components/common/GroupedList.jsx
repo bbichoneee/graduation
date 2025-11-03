@@ -2,10 +2,6 @@ import { useMemo } from "react";
 import TypeGroup from "./TypeGroup";
 import "./TypeGroup.scss";
 
-// 유형 키(태그)
-const getTypeKey = (p) =>
-  Array.isArray(p.tags) && p.tags.length ? p.tags[0] : "기타";
-
 // 난이도 라벨
 const LEVEL_LABEL = (n) => `난이도 ${n}`;
 
@@ -14,6 +10,7 @@ export default function GroupedList({
   userProgressById = {},
   defaultOpenFirst = false,       // ✅ 기본값: 처음에도 닫힘
   groupMode = "unit",             // "unit" | "level"
+  initialOpenGroup,               // New prop to open a specific group
 }) {
   const list = Array.isArray(problems) ? problems : [];
 
@@ -23,9 +20,12 @@ export default function GroupedList({
       const map = new Map(); // groupName -> [{problem, status}]
       for (const p of list) {
         const status = userProgressById[p.id] ?? "unattempted";
-        const key = getTypeKey(p);
-        if (!map.has(key)) map.set(key, []);
-        map.get(key).push({ problem: p, status });
+        const tags = Array.isArray(p.tags) && p.tags.length > 0 ? p.tags : ["기타"];
+        for (const tag of tags) {
+          if (tag === "c") continue; // Skip 'c' tag
+          if (!map.has(tag)) map.set(tag, []);
+          map.get(tag).push({ problem: p, status });
+        }
       }
       // 그룹 내부 정렬 (level → id)
       for (const [, arr] of map) {
@@ -89,7 +89,7 @@ export default function GroupedList({
           key={`${groupMode}::${groupName}`}   // ⬅️ groupMode 포함
           typeName={groupName}
           items={items}
-          defaultOpen={false}                  // ⬅️ 항상 닫힘으로 시작
+          defaultOpen={groupName === initialOpenGroup} // Open if groupName matches initialOpenGroup
         />
       ))}
     </div>

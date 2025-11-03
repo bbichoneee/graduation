@@ -17,6 +17,7 @@ import Qbank from "./pages/Qbank/Qbank.jsx";
 import Ranking from "./pages/Ranking/Ranking.jsx";
 import SolveQ from "./pages/SolveQ/SolveQ.jsx";
 import UserQ from "./pages/UserQ/UserQ.jsx";
+import UserProfilePage from "./pages/UserProfile/UserProfilePage.jsx";
 
 
 // 토큰 스토어 (로컬스토리지 accessToken 확인)
@@ -48,10 +49,11 @@ const MyRoutes = () => {
         <Route path="/userq" element={<UserQ />} />
         <Route path="/ranking" element={<Ranking />} />
         <Route path="/mypage" element={<Mypage />} />
+        <Route path="/profile/:userId" element={<UserProfilePage />} />
         <Route path="/diffprofile" element={<DiffProfile />} />
         <Route path="/diffqsolutionlist" element={<DiffQSolutionList />} />
         <Route path="/diffqsolutionlook" element={<DiffQSolutionLook />} />
-        <Route path="/solveq/:id" element={<SolveQ />} />
+        <Route path="/solveq/:orderNum" element={<SolveQ />} />
       </Route>
 
       {/* fallback */}

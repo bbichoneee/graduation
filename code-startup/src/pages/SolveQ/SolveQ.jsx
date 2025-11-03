@@ -1,4 +1,3 @@
-// src/pages/SolveQ.jsx
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./SolveQ.scss";
@@ -7,37 +6,13 @@ import TimeLimitBadge from "../Qbank/TimeLimitBadge";
 import AnswerRate from "../Qbank/AnswerRate";
 import useSolveTimer from "../../components/hooks/useSolveTimer";
 import CodeEditor from "../../components/utility/CodeEditor";
-import { fetchProblemById, fetchProblemStats } from "../../api/problems";
+import { fetchProblemByOrderNum, fetchProblemStats } from "../../api/problems";
 import { submitSolution } from "../../api/submission";
 import { markSolvedToday } from "../../lib/dailyProgress";
 
-/** === 백엔드 → 화면 필드 적응 === */
-const mapDifficultyToLevel = (d) => {
-  const m = String(d || "").match(/(\d+)/); // "LEVEL_3" → 3
-  return m ? Number(m[1]) : null;
-};
-function adaptProblemDetail(raw) {
-  if (!raw) return null;
-  const level = raw.level ?? mapDifficultyToLevel(raw.difficulty);
-  const uppoint = raw.uppoint ?? (Number.isFinite(raw.score) ? raw.score : (level ? level * 10 : null));
-
-  // 샘플(있는 경우), 없으면 첫 번째 케이스
-  const list = Array.isArray(raw.testCases) ? raw.testCases : [];
-  const sample = list.find((t) => t?.isSample) ?? list[0] ?? null;
-
-  return {
-    ...raw,
-    level,
-    uppoint,
-    sampleIn: sample?.inputData ?? "-",
-    sampleOut: sample?.expectedOutput ?? "-",
-    testCases: list, // 그대로 유지(제출 시 사용)
-  };
-}
-
 export default function SolveQ() {
-  const { id } = useParams();
-  const pid = Number(id);
+  const { orderNum } = useParams();
+  const pid = Number(orderNum);
 
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -45,6 +20,7 @@ export default function SolveQ() {
 
   const [tab, setTab] = useState("submit"); // submit | others | result
   const [sharePublic, setSharePublic] = useState(false);
+  const [isJudging, setIsJudging] = useState(false);
 
   const [submission, setSubmission] = useState(null);
   const { formatted, recordSubmit } = useSolveTimer();
@@ -63,9 +39,9 @@ export default function SolveQ() {
     setLoadError(null);
     (async () => {
       try {
-        const raw = await fetchProblemById(pid);
+        const problemData = await fetchProblemByOrderNum(pid);
         if (!alive) return;
-        setProblem(adaptProblemDetail(raw));
+        setProblem(problemData);
       } catch (e) {
         if (!alive) return;
         setLoadError(e);
@@ -108,10 +84,11 @@ int main(void){
 `
   );
   const handleSubmit = async () => {
+    setIsJudging(true);
     try {
       const usedMs = recordSubmit();
       const created = await submitSolution({
-        problemId: pid,
+        problemId: problem.id,
         code: source,
         language: "c",
         usedMs,
@@ -122,6 +99,8 @@ int main(void){
       setTab("result");
     } catch (e) {
       alert("제출 실패: " + (e.response?.data?.message || e.message));
+    } finally {
+      setIsJudging(false);
     }
   };
 
@@ -167,7 +146,7 @@ int main(void){
           {/* 문제 설명 */}
           <div className="col-12">
             <div className="card solve-card">
-              <h3 className="m-3">#{problem.id}. {problem.title}</h3>
+              <h3 className="m-3">#{problem.orderNum}. {problem.title}</h3>
               <div className="card-body">
                 <p className="mb-2">{problem.description}</p>
                 <hr />
@@ -287,7 +266,9 @@ int main(void){
                   <div className="text-muted">아직 다른 사람 풀이가 없습니다. (추후 API 연동/목록 표 구현)</div>
                 ) : (
                   <div>
-                    {submission ? (
+                    {isJudging ? (
+                      <div className="text-muted">채점 중...</div>
+                    ) : submission ? (
                       <>
                         <div className="mb-2 d-flex align-items-center gap-2">
                           {/* ✅ 템플릿 리터럴 오타 수정 */}
@@ -346,7 +327,9 @@ int main(void){
 
           <div className="ms-auto d-flex align-items-center gap-2 flex-shrink-0">
             <span className="badge bg-dark" title="페이지 진입부터 자동 측정">⏱ {formatted}</span>
-            <button className="btn btn-primary" onClick={handleSubmit}>제출</button>
+            <button className="btn btn-primary" onClick={handleSubmit} disabled={isJudging}>
+              {isJudging ? "제출 중..." : "제출"}
+            </button>
           </div>
         </div>
       </div>

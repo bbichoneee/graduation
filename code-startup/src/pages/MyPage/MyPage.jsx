@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import MenuBar from "../../components/common/MenuBar";
-import ProfileCard from "../../components/common/Profilecard";
+import ProfileCard from "../../components/common/ProfileCard";
 import { http } from "../../api/http";
+import { fetchMyRank } from "../../api/ranking";
 import "./MyPage.scss";
 
 const FILTERS = { ALL: "all", CORRECT: "ac", WRONG: "wa" };
@@ -11,6 +12,8 @@ export default function MyPage() {
   const [filter, setFilter] = useState(FILTERS.ALL);
   const [submissions, setSubmissions] = useState([]);
   const [stats, setStats] = useState({ solvedCount: 0, correctCount: 0, wrongCount: 0 });
+  const [myRank, setMyRank] = useState(null);
+  const [myProfile, setMyProfile] = useState(null); // New state for user profile
   const [loading, setLoading] = useState(true);
   const [loadErr, setLoadErr] = useState(null);
 
@@ -20,9 +23,11 @@ export default function MyPage() {
       setLoading(true);
       setLoadErr(null);
       try {
-        const [statsRes, subsRes] = await Promise.all([
+        const [statsRes, subsRes, rankRes, profileRes] = await Promise.all([ // Added profileRes
           http.get("/api/users/me/stats"),
           http.get("/api/submissions/me", { params: { limit: 200, result: filter } }),
+          fetchMyRank(),
+          http.get("/api/users/me"), // Fetch user profile
         ]);
 
         if (!mounted) return;
@@ -32,6 +37,8 @@ export default function MyPage() {
           wrongCount: statsRes.data?.wrongCount ?? 0,
         });
         setSubmissions(Array.isArray(subsRes.data) ? subsRes.data : []);
+        setMyRank(rankRes);
+        setMyProfile(profileRes.data); // Set user profile data
       } catch (e) {
         if (!mounted) return;
         setLoadErr(e?.message ?? "불러오기 실패");
@@ -52,7 +59,11 @@ export default function MyPage() {
       <div className="mypage-layout">
         {/* 왼쪽: 프로필 */}
         <aside className="left-col">
-          <ProfileCard />
+          <ProfileCard
+            nickname={myProfile?.nickname} // From users/me
+            profileImageUrl={myProfile?.profileImageUrl} // From users/me
+            totalPoints={myRank?.points} // From ranking/me
+          />
         </aside>
 
         {/* 오른쪽: 요약 + 히스토리 */}

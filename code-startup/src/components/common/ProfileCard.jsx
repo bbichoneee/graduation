@@ -6,14 +6,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdAddAPhoto } from "react-icons/md";
 import "./ProfileCard.scss";
-import { fetchCurrentUser } from "../../api/user";
-import { ensureAccessToken, http } from "../../api/http"; // ⬅️ http 추가
+import { fetchMyRank } from "../../api/ranking";
 
 function ProfileCard({
   nickname: nicknameProp,
   profileImageUrl: profileImageUrlProp,
   totalPoints: totalPointsProp,
   onChangePhoto,
+  title, // New title prop
 }) {
   const fileInputRef = useRef(null);
 
@@ -49,34 +49,11 @@ function ProfileCard({
     []
   );
 
-  // ⬇️ 동점 처리 포함한 순위 계산 (standard competition ranking)
-  function computeMyRank(sortedList, myUserId) {
-    // 기대 형태: [{ id, totalScore, user: { id, ... } }, ...] desc
-    if (!Array.isArray(sortedList) || !myUserId) return null;
-
-    let currentRank = 0;      // 현재 할당할 랭크
-    let processed = 0;        // 처리한 항목 수
-    let prevScore = null;
-
-    for (const row of sortedList) {
-      processed += 1;
-      const score = row?.totalScore ?? 0;
-
-      if (prevScore === null || score !== prevScore) {
-        currentRank = processed; // 새로운 점수면 현재까지 처리한 개수 = 랭크
-        prevScore = score;
-      }
-      const rowUserId = row?.user?.id ?? row?.user_id ?? row?.userId;
-      if (rowUserId === myUserId) {
-        return currentRank; // 동점이면 동일 랭크 반환
-      }
-    }
-    return null;
-  }
-
-  // me + ranking 불러와서 순위 계산
+  // me + my-ranking 불러오기
   useEffect(() => {
-    // 부모가 모두 내려주면 API 호출 생략 (닉/이미지/포인트만으로는 순위는 모름 → 호출 필요)
+    // 부모가 닉네임, 프로필, 포인트를 모두 내려주면 API 호출 생략
+    if (nicknameProp && profileImageUrlProp && totalPointsProp) return;
+
     let alive = true;
     const myReq = ++reqIdRef.current;
 
@@ -84,24 +61,13 @@ function ProfileCard({
       try {
         setLoading(true);
         setLoadErr(null);
-        await ensureAccessToken();
 
-        // 1) 내 정보
-        const meData = await fetchCurrentUser(); // { id, username, nickname, ... }
-        if (!alive || myReq !== reqIdRef.current) return;
-        setMe(meData ?? null);
-
-        // 2) 전체 랭킹
-        const { data: rankingList } = await http.get("/api/ranking");
+        // 내 랭킹 정보 조회 (user, rank, totalScore 포함)
+        const myRankData = await fetchMyRank();
         if (!alive || myReq !== reqIdRef.current) return;
 
-        // 안전: 혹시 정렬 보장이 없다면 점수 내림차순으로 한번 더 정렬
-        const sorted = Array.isArray(rankingList)
-          ? [...rankingList].sort((a, b) => (b?.totalScore ?? 0) - (a?.totalScore ?? 0))
-          : [];
-
-        const myRank = computeMyRank(sorted, meData?.id);
-        setRank(myRank);
+        setMe(myRankData?.user ?? null);
+        setRank(myRankData?.rank ?? null);
       } catch (e) {
         if (!alive || myReq !== reqIdRef.current) return;
         setLoadErr(e?.response?.data || e?.message || "프로필/랭킹 정보를 불러오지 못했습니다.");
@@ -134,7 +100,7 @@ function ProfileCard({
 
   return (
       <div className="profile-card">
-        <div className="profile-header">내 프로필</div>
+        <div className="profile-header">{title || "내 프로필"}</div>
 
         <div className="profile-body">
           <div className="two_content top">

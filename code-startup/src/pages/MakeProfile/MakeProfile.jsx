@@ -3,11 +3,12 @@ import "./MakeProfile.scss";
 import { Link, useNavigate } from "react-router-dom";
 import { useRef, useState } from "react";
 import { saveDraft } from "../../utils/signupDraft";
+import { uploadImageToCloudinary } from "../../utils/cloudinaryUpload"; // Import the new utility
 
 /** 기본 이미지 경로 */
-const DEFAULT_AVATAR_URL = "/img/default_profile.png";
+const DEFAULT_AVATAR_URL = "/img/default_profile.png"; // This can be removed if not used elsewhere
 
-// URL → File
+// URL → File (This function might not be needed anymore if we always upload)
 async function fileFromUrl(url, filename = "default_profile.png") {
   const res = await fetch(url);
   const blob = await res.blob();
@@ -78,19 +79,25 @@ export default function MakeProfile({
     onChange?.(null, null);
   };
 
-  // 다음: 미선택이면 기본 이미지 URL 저장
+  // 다음: 이미지 업로드 및 URL 저장
   const handleNext = async () => {
     if (submitting) return;
     setSubmitting(true);
     try {
-      let dataUrl = preview;
-      if (!dataUrl) {
-        // 파일 없이 기본 이미지 URL만 저장 (백엔드는 profileImageUrl: string)
-        dataUrl = DEFAULT_AVATAR_URL;
+      let imageUrl = null; // Default to null as per requirement
+
+      if (photoFile) {
+        // If a file is selected, upload it
+        imageUrl = await uploadImageToCloudinary(photoFile);
       }
-      // 가입 진행 중 데이터에 저장
-      saveDraft({ profileImageUrl: dataUrl });
+      // If no file is selected, imageUrl remains null.
+      // If a file was selected but then cleared, photoFile would be null.
+
+      // Save the obtained URL (or null) to the draft
+      saveDraft({ profileImageUrl: imageUrl });
       navigate("/makeidpassword");
+    } catch (e) {
+      setError("이미지 업로드 실패: " + (e?.message || "알 수 없는 오류"));
     } finally {
       setSubmitting(false);
     }

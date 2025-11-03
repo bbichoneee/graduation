@@ -32,8 +32,10 @@ export async function submitSolution({
     testCases,
   };
 
+  delete payload.testCases
+
   try {
-    const res = await http.post("/api/submission", payload, { withCredentials: true });
+    const res = await http.post("/api/submissions", payload, { withCredentials: true });
     return res.data;
   } catch (err) {
     // 디버깅 로그(네트워크 탭과 맞춰보기 좋음)
@@ -51,8 +53,15 @@ export async function submitSolution({
 export async function fetchSubmissionResult(submissionId) {
   // 결과 조회도 보호 API일 수 있으니 AT 보장(부담 거의 없음)
   await ensureAccessToken();
-  const res = await http.get(`/api/submission/${submissionId}`, { withCredentials: true });
+  const res = await http.get(`/api/submissions/${submissionId}`, { withCredentials: true });
   return res.data;
 }
 
+    /** 내 제출 목록 조회: GET /api/submissions/me */
+    export async function fetchMySubmissions() {
+      await ensureAccessToken(); // AT 보장
+      const res = await http.get("/api/submissions/me", {
+      withCredentials: true });
+      return res.data;
+    }
 
