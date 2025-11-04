@@ -65,19 +65,17 @@ button{
 .rights-head {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-}
-
-.rights-title {
-  margin: 0;
-  font-weight: 700;
-  font-size: 1.5rem;
+  /* Removed justify-content: flex-end; as rights-timer will handle spacing */
+  width: 100%; /* Ensure rights-head takes full width */
 }
 
 .rights-timer {
   font-family: $font-main;
   font-weight: 600;
   font-size: 1.125rem;
+  display: flex;
+  justify-content: space-between; /* Pushes items to opposite ends */
+  width: 100%; /* Ensure rights-timer takes full width of its parent */
 }
 
 /* 문제 카드 */
@@ -156,4 +154,8 @@ button{
 
 .weakest-type-card{
   text-align :center;
+}
+
+#a, #b, .daily-attempts-exhausted-message{
+  font-family : $font-main;
 }

@@ -1,7 +1,8 @@
 // src/components/common/UserCard.jsx
 import { useEffect, useState } from "react";
 import { fetchMe } from "../../api/auth";
-import SecureAvatar from "./SecureAvatar";           // ✅ 추가
+import { fetchMyRank } from "../../api/ranking";
+import SecureAvatar from "./SecureAvatar";
 import "./UserCard.scss";
 
 const UserCard = () => {
@@ -9,8 +10,8 @@ const UserCard = () => {
     id: undefined,
     username: "",
     nickname: "닉네임",
-    profileImageUrl: "",   // 서버 값(상대/절대 어떤 것이든)
-    totalPoints: 0,
+    profileImageUrl: "",
+    points: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,14 +20,17 @@ const UserCard = () => {
     let alive = true;
     (async () => {
       try {
-        const me = await fetchMe(); // { id, username, nickname, profileImageUrl, totalPoints, ... }
+        const [me, myRank] = await Promise.all([
+          fetchMe(),
+          fetchMyRank().catch(() => null),
+        ]);
         if (!alive) return;
         setUser({
           id: me?.id,
           username: me?.username ?? "",
           nickname: me?.nickname ?? "닉네임",
           profileImageUrl: me?.profileImageUrl ?? "",
-          totalPoints: Number.isFinite(me?.totalPoints) ? me.totalPoints : 0,
+          points: myRank?.points ?? 0,
         });
       } catch {
         if (alive) setError("유저 정보를 불러오지 못했어요.");
@@ -34,10 +38,12 @@ const UserCard = () => {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  const pointsText = `${user.totalPoints} points`;
+  const pointsText = `${user.points} points`;
 
   return (
     <div className="card user-card" aria-busy={loading}>

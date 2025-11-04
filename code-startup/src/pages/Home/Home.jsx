@@ -1,7 +1,8 @@
 //2. 메인 페이지
 import { useEffect, useState, useMemo } from "react";
 import MenuBar from "../../components/common/MenuBar";
-import { fetchCurrentUser } from "../../api/user"; // ✅ /api/users/me 호출 헬퍼
+import { fetchCurrentUser } from "../../api/user";
+import { fetchMyRank } from "../../api/ranking"; // Import fetchMyRank
 import './Car.scss';
 
 const Home = () => {
@@ -16,9 +17,16 @@ const Home = () => {
     let mounted = true;
     (async () => {
       try {
-        const data = await fetchCurrentUser(); // { username, nickname, profileImageUrl, totalPoints, ... }
+        const [userData, myRankData] = await Promise.all([
+          fetchCurrentUser(),
+          fetchMyRank().catch(() => null), // Fetch my rank, handle error gracefully
+        ]);
         if (!mounted) return;
-        setMe(data || null);
+
+        setMe({
+          ...userData,
+          points: myRankData?.points ?? 0, // Add points from ranking data
+        });
       } catch (e) {
         if (!mounted) return;
         setLoadErr(e);
@@ -30,9 +38,9 @@ const Home = () => {
     return () => { mounted = false; };
   }, []);
 
-  const avatarSrc = me?.profileImageUrl || "/img/default-avatar.png"; // ✅ 기본 아바타 경로(없으면 프로젝트에 하나 추가)
+  const avatarSrc = me?.profileImageUrl || "/img/default-avatar.png";
   const displayName = me?.nickname || me?.username || "사용자";
-  const points = typeof me?.totalPoints === "number" ? nf.format(me.totalPoints) : "0";
+  const points = typeof me?.points === "number" ? nf.format(me.points) : "0";
 
   return (
     <div>

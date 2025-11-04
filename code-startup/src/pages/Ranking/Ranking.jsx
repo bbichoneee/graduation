@@ -44,7 +44,7 @@ export default function Ranking() {
     if (!myRank) return null;
     return {
       rank: myRank.rank,
-      score: myRank.totalScore,
+      score: myRank.points,
     };
   }, [myRank]);
 
@@ -100,7 +100,7 @@ export default function Ranking() {
                         : null;
 
                     const isMe = me && r?.id === me?.id;
-                    const score = Number.isFinite(r?.totalScore) ? r.totalScore : 0;
+                    const score = Number.isFinite(r?.points) ? r.points : 0;
 
                     const name =
                       r?.nickname ||

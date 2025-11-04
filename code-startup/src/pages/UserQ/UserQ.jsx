@@ -133,32 +133,42 @@ export default function UserQ() {
             /* 데일리 선택 시에만 헤더/바디/푸터 표시 */
             <>
               <div className="rights-head">
-                <div className="rights-timer">문제 초기화까지 남은 시간 : {remain}</div>
+                <div className="rights-timer">
+                  {daily && daily.remainingAttempts !== undefined && (
+                    <span className="remaining-attempts">남은 기회: {daily.remainingAttempts}번</span>
+                  )}
+                  <span className="remaining-time">문제 초기화까지 남은 시간 : {remain}</span>
+                </div>
               </div>
 
               <div className="rights-body">
-                <div
-                  className="daily-card"
-                  role="button"
-                  tabIndex={0}
-                  onClick={goSolveDaily}
-                  onKeyDown={(e) => (e.key === "Enter" ? goSolveDaily() : null)}
-                >
-                  {loadingDaily && <div className="daily-loading">불러오는 중…</div>}
-                  {errorDaily && (
-                    <div className="daily-loading">불러오기 실패: {String(errorDaily.message || errorDaily)}</div>
-                  )}
-                  {!loadingDaily && !errorDaily && daily && (
-                    <>
+                {loadingDaily && <div className="daily-loading">불러오는 중…</div>}
+                {errorDaily && (
+                  <div className="daily-loading">불러오기 실패: {String(errorDaily.message || errorDaily)}</div>
+                )}
+                {!loadingDaily && !errorDaily && daily && (
+                  daily.remainingAttempts <= 0 ? (
+                    <div className="daily-attempts-exhausted-message">
+                      <p>모든 기회를 다 썼습니다!</p>
+                      <p>다음날 다시 도전하세요!</p>
+                    </div>
+                  ) : (
+                    <div
+                      className="daily-card"
+                      role="button"
+                      tabIndex={0}
+                      onClick={goSolveDaily}
+                      onKeyDown={(e) => (e.key === "Enter" ? goSolveDaily() : null)}
+                    >
                       <div className="daily-meta">
                         <span className="daily-id">#{daily.orderNum}</span>
                         <span className="daily-level">Lv.{daily.level ?? "?"}</span>
                       </div>
                       <div className="daily-title">{daily.title}</div>
                       <div className="daily-cta">바로 풀러 가기 →</div>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  )
+                )}
               </div>
 
               <div className="rights-footer">하루에 하나씩이라도 풀자</div>
@@ -182,13 +192,13 @@ export default function UserQ() {
                       <span className="highlight">'{weakestType.tag}'</span>
                       입니다.
                     </p>
-                    <p className="weakest-type-rate">
+                    <p className="weakest-type-rate" id ="a">
                       (평균 정답률: {(weakestType.averageCorrectRate * 100).toFixed(2)}%)
                     </p>
                     <button 
                       type="button"
                       className="btn btn-primary mt-3"
-                      onClick={goToQbankWeakestType}
+                      onClick={goToQbankWeakestType} id = "b"
                     >
                       해당 유형 집중공략하기 →
                     </button>

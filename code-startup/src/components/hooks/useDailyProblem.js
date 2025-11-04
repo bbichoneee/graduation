@@ -42,6 +42,7 @@ export default function useDailyProblem({ enabled }) {
           description: fullProblemDetails.description, // Also include description
           status: rawDailyProblem.status, // From daily problem response
           date: rawDailyProblem.date,     // From daily problem response
+          remainingAttempts: rawDailyProblem.remainingAttempts, // Add remainingAttempts
           stats: stats, // Add stats to the data
         };
         setData(picked);

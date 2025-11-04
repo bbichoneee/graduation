@@ -32,9 +32,9 @@ export default function MyPage() {
 
         if (!mounted) return;
         setStats({
-          solvedCount: statsRes.data?.solvedCount ?? 0,
-          correctCount: statsRes.data?.correctCount ?? 0,
-          wrongCount: statsRes.data?.wrongCount ?? 0,
+          solvedCount: statsRes.data?.attemptedProblems ?? 0,
+          correctCount: statsRes.data?.correctProblems ?? 0,
+          wrongCount: statsRes.data?.incorrectProblems ?? 0,
         });
         setSubmissions(Array.isArray(subsRes.data) ? subsRes.data : []);
         setMyRank(rankRes);
