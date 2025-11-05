@@ -5,6 +5,7 @@ import MenuBar from "../../components/common/MenuBar";
 import "./Qbank.scss";
 import GroupedList from "../../components/common/GroupedList";
 import { fetchProblems } from "../../api/problems";
+import { fetchMySubmissions } from "../../api/submission"; // Import fetchMySubmissions
 
 const Qbank = () => {
   const [searchParams] = useSearchParams();
@@ -13,6 +14,7 @@ const Qbank = () => {
   const [lineUp, setLineUp] = useState("unit"); // "unit"(유형) | "level"(난이도)
   const [isClicked, setIsClicked] = useState(true);
   const [problems, setProblems] = useState([]);
+  const [userProgressByOrderNum, setUserProgressByOrderNum] = useState({}); // State for problem statuses by orderNum
   const [loading, setLoading] = useState(true);
   const [loadErr, setLoadErr] = useState(null);
 
@@ -22,20 +24,31 @@ const Qbank = () => {
     else setLineUp("unit");
   };
 
-  // 사용자 진행도 예시(있으면 채우기)
-  const userProgressById = {
-    // [problemId]: "unattempted" | "solved" | "wrong"
-  };
-
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       setLoadErr(null);
       try {
-        const adaptedProblems = await fetchProblems();
+        const [adaptedProblems, mySubmissions] = await Promise.all([
+          fetchProblems(),
+          fetchMySubmissions({ limit: 200, result: "all" }).catch(() => []), // Fetch submissions
+        ]);
         if (!mounted) return;
+
         setProblems(adaptedProblems);
+
+        // Create a map for quick lookup of problem status by orderNum
+        const progressMap = mySubmissions.reduce((acc, curr) => {
+          // Only store the final status for each problem (e.g., SUCCESS > FAIL > NOPE)
+          // Assuming submissions are ordered by most recent, or we need to find the final one
+          // For simplicity, let's assume the API returns the *final* status for each problemId
+          // If multiple submissions for same problemId, the last one in the array will win
+          acc[curr.orderNum] = curr.result; 
+          return acc;
+        }, {});
+        setUserProgressByOrderNum(progressMap);
+
       } catch (e) {
         if (!mounted) return;
         setLoadErr(e?.message ?? "문제 목록을 불러오지 못했습니다.");
@@ -76,7 +89,7 @@ const Qbank = () => {
         ) : (
           <GroupedList
             problems={problems}
-            userProgressById={userProgressById}
+            userProgressByOrderNum={userProgressByOrderNum}
             defaultOpenFirst
             groupMode={lineUp === "level" ? "level" : "unit"}
             initialOpenGroup={initialTag}

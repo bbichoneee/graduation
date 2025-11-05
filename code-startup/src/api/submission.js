@@ -58,10 +58,11 @@ export async function fetchSubmissionResult(submissionId) {
 }
 
     /** 내 제출 목록 조회: GET /api/submissions/me */
-    export async function fetchMySubmissions() {
+    export async function fetchMySubmissions(params = {}) {
       await ensureAccessToken(); // AT 보장
       const res = await http.get("/api/submissions/me", {
-      withCredentials: true });
+      withCredentials: true,
+      params, // Pass params to the request
+    });
       return res.data;
     }
-

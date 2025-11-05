@@ -7,7 +7,7 @@ const LEVEL_LABEL = (n) => `난이도 ${n}`;
 
 export default function GroupedList({
   problems = [],
-  userProgressById = {},
+  userProgressByOrderNum = {},
   defaultOpenFirst = false,       // ✅ 기본값: 처음에도 닫힘
   groupMode = "unit",             // "unit" | "level"
   initialOpenGroup,               // New prop to open a specific group
@@ -19,7 +19,7 @@ export default function GroupedList({
     if (groupMode === "unit") {
       const map = new Map(); // groupName -> [{problem, status}]
       for (const p of list) {
-        const status = userProgressById[p.id] ?? "unattempted";
+        const status = userProgressByOrderNum[p.orderNum] ?? "unattempted";
         const tags = Array.isArray(p.tags) && p.tags.length > 0 ? p.tags : ["기타"];
         for (const tag of tags) {
           if (tag === "c") continue; // Skip 'c' tag
@@ -46,7 +46,7 @@ export default function GroupedList({
     }
 
     for (const p of list) {
-      const status = userProgressById[p.id] ?? "unattempted";
+      const status = userProgressByOrderNum[p.orderNum] ?? "unattempted";
       const raw = Number(p.level ?? 1);
       const level = Number.isFinite(raw) ? Math.min(5, Math.max(1, raw)) : 1;
       map.get(LEVEL_LABEL(level)).push({ problem: p, status });
@@ -57,7 +57,7 @@ export default function GroupedList({
       arr.sort((a, b) => Number(a.problem.id) - Number(b.problem.id));
     }
     return map;
-  }, [list, userProgressById, groupMode]);
+  }, [list, userProgressByOrderNum, groupMode]);
 
   // ── 섹션 순서 ─────────────────────────────────────────
   const entries = useMemo(() => {

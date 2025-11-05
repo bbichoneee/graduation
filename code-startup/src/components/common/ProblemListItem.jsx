@@ -8,9 +8,10 @@ const LEVEL_ICON_SRC = "/img/star.jpg";
 // 상태 → 배지 모드 매핑
 const statusBadge = (status) => {
   switch (status) {
-    case "solved":  return { text: "맞았음", mod: "pli-badge--success" };
-    case "wrong":   return { text: "틀렸음", mod: "pli-badge--danger" };
-    default:        return { text: "미도전", mod: "pli-badge--secondary" };
+    case "SUCCESS": return { text: "성공", mod: "pli-badge--success" };
+    case "FAIL":    return { text: "실패", mod: "pli-badge--danger" };
+    case "NOPE":    return { text: "미제출", mod: "pli-badge--secondary" };
+    default:        return { text: "미도전", mod: "pli-badge--secondary" }; // Fallback for unattempted or unknown
   }
 };
 
