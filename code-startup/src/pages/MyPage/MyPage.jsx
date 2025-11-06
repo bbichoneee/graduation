@@ -6,7 +6,7 @@ import { http } from "../../api/http";
 import { fetchMyRank } from "../../api/ranking";
 import "./MyPage.scss";
 
-const FILTERS = { ALL: "all", CORRECT: "ac", WRONG: "wa" };
+const FILTERS = { ALL: "all", CORRECT: "SUCCESS", WRONG: "FAIL" };
 
 export default function MyPage() {
   const [filter, setFilter] = useState(FILTERS.ALL);
@@ -140,9 +140,9 @@ export default function MyPage() {
                           row.submittedAt || row.createdAt || row.created_at || new Date().toISOString();
                         const pid = row.problemId ?? row.problem_id ?? row.problem?.id;
                         const title = row.problemTitle ?? row.problem?.title ?? (pid ? `#${pid}` : "-");
-                        const pts = row.points ?? row.score ?? row.problem?.score ?? "-";
+                        const pts = row.uppoint ?? row.score ?? row.problem?.score ?? "-";
                         const res = (row.result || "").toUpperCase();
-                        const isAC = res === "SUCCESS" || res === "AC";
+                        const isAC = res === "SUCCESS";
 
                         return (
                           <tr key={row.id ?? when}>
