@@ -1,12 +1,10 @@
 
-// 변경점 요약:
-// 1) fetchMyRank 제거, 대신 http.get("/api/ranking")로 전체 랭킹 받아서 내 순위 계산
-// 2) 동점(같은 totalScore) 동일 순위 처리 (standard competition ranking)
-
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MdAddAPhoto } from "react-icons/md";
 import "./ProfileCard.scss";
 import { fetchMyRank } from "../../api/ranking";
+import { logout } from "../../api/auth";
 
 function ProfileCard({
   nickname: nicknameProp,
@@ -16,6 +14,7 @@ function ProfileCard({
   title, // New title prop
 }) {
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const [me, setMe] = useState(null);
   const [rank, setRank] = useState(null);     // ⬅️ 순위 상태
@@ -90,6 +89,16 @@ function ProfileCard({
     e.target.value = "";
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("An error occurred during logout:", error);
+    } finally {
+      navigate("/login");
+    }
+  };
+
   const pointsText =
     typeof totalPoints === "number"
       ? totalPoints.toLocaleString()
@@ -146,6 +155,9 @@ function ProfileCard({
             <div className="points-value">{rankText}</div>
           </div>
 
+          <button type="button" className="logout-btn" onClick={handleLogout}>
+            로그아웃
+          </button>
         </div>
       </div>
   );

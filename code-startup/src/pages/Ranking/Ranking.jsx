@@ -36,8 +36,26 @@ export default function Ranking() {
     })();
   }, []);
 
+  // 랭킹 데이터에 동점자 처리를 위한 순위(rank)를 미리 계산
+  const rankedRows = useMemo(() => {
+    if (!rows || rows.length === 0) {
+      return [];
+    }
+
+    const newRows = [];
+    let rank = 1;
+    for (let i = 0; i < rows.length; i++) {
+      // 이전 사용자와 점수가 다르면, 현재 순위를 (인덱스 + 1)로 업데이트
+      if (i > 0 && rows[i].points < rows[i - 1].points) {
+        rank = i + 1;
+      }
+      newRows.push({ ...rows[i], rank });
+    }
+    return newRows;
+  }, [rows]);
+
   // 화면엔 Top 100만
-  const displayRows = useMemo(() => rows.slice(0, 100), [rows]);
+  const displayRows = useMemo(() => rankedRows.slice(0, 100), [rankedRows]);
 
   // 내 등수는 API로부터 직접 받은 값 사용
   const myRankInfo = useMemo(() => {
@@ -88,8 +106,8 @@ export default function Ranking() {
                 <div className="p-4 text-danger">{String(loadErr)}</div>
               ) : displayRows.length ? (
                 <ol className="ranking-list list-unstyled m-0">
-                  {displayRows.map((r, i) => {
-                    const rank = i + 1;
+                  {displayRows.map((r) => {
+                    const { rank } = r; // 미리 계산된 rank 사용
                     const medal =
                       rank === 1
                         ? { label: "🥇", cls: "gold" }

@@ -99,7 +99,7 @@ export default function MyPage() {
           </section>
 
           {/* 풀이 히스토리 (날짜 / 문제번호 / 문제 제목 / 포인트 / 결과) */}
-          <section className="card-block">
+          <section className="card-block history-card-block">
             <header className="card-title-row">
               <h2 className="card-title">풀이 히스토리</h2>
               <div className="filters">

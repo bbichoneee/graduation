@@ -8,12 +8,35 @@
   flex : 1 1 auto;
 }
 
-.leftbtn .choicebtn {
+.leftbtn .btn.btn-outline-dark.choicebtn {
   font-family: $font-main;
   font-size: 20px;
-  width: 100%;   // 그룹 너비를 꽉 채우기
-  height : 100%;
-  border : 2px solid black;
+  width: 100%;
+  height: 100%;
+  border: 2px solid black;
+  transition: background-color 0.2s ease-out, color 0.2s ease-out, transform 0.1s ease-out;
+
+  // When button is being pressed
+  &:active {
+    transform: scale(0.98); // Slightly shrink the button more
+    filter: brightness(0.9); // Darken it a bit
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2); // Add an inner shadow for pressed effect
+    background-color: #28a745 !important; // Green background when pressed
+    border-color: #28a745 !important; // Green border when pressed
+    color: white !important; // White text for contrast
+  }
+
+  // When button is selected (active)
+  &.active {
+    background-color: #41a859 !important; // Green background when selected
+    color: white !important; // White text
+    border-color: #000000 !important; // Matching border
+  }
+
+  // Hover effect for non-selected buttons
+  &:not(.active):hover {
+    background-color: #e9ecef; // Light grey background on hover
+  }
 }
 
 button{
@@ -157,5 +180,211 @@ button{
 }
 
 #a, #b, .daily-attempts-exhausted-message{
+
   font-family : $font-main;
+
+}
+
+
+
+/* New styles for stacked daily problems */
+
+
+
+.daily-stack-container {
+
+
+
+  position: relative;
+
+
+
+  width: 100%;
+
+
+
+  height: 400px; /* Increased height for more vertical space */
+
+
+
+  display: flex;
+
+
+
+  align-items: center;
+
+
+
+  justify-content: center;
+
+
+
+}
+
+
+
+
+
+
+
+.daily-card--previous,
+
+
+
+.daily-card--current,
+
+
+
+.daily-card--next {
+
+
+
+  position: absolute;
+
+
+
+  width: 96%; /* Set to 96% of the container, removing max-width for responsiveness */
+
+
+
+}
+
+
+
+
+
+
+
+.daily-card--current {
+
+
+
+  z-index: 10;
+
+
+
+  // The main card doesn't need extra transforms unless for animation
+
+
+
+}
+
+
+
+
+
+
+
+.daily-card--previous {
+
+
+
+
+
+
+
+  z-index: 5;
+
+
+
+
+
+
+
+  transform: translateY(-150px) scale(0.9); /* Adjusted translateY for more separation */
+
+
+
+
+
+
+
+  opacity: 0.4; /* Reduced opacity to make it look more disabled */
+
+
+
+
+
+
+
+  filter: grayscale(100%); /* Apply grayscale filter */
+
+
+
+
+
+
+
+  pointer-events: none; /* Not clickable */
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.daily-card--next {
+
+
+
+
+
+
+
+  z-index: 5;
+
+
+
+
+
+
+
+  transform: translateY(150px) scale(0.9); /* Adjusted translateY for more separation */
+
+
+
+
+
+
+
+  opacity: 0.4; /* Reduced opacity to make it look more disabled */
+
+
+
+
+
+
+
+  filter: grayscale(100%); /* Apply grayscale filter */
+
+
+
+
+
+
+
+  pointer-events: none; /* Not clickable */
+
+
+
+
+
+
+
 }

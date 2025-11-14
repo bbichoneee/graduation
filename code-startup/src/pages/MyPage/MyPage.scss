@@ -26,6 +26,7 @@
   flex-direction: column;
   gap: 20px;
   font-family: $font-main;
+  max-height: calc(100vh - 150px); /* Constrain the height of the right column more */
 }
 
 /* 카드 공통 */
@@ -35,6 +36,14 @@
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* 풀이 히스토리 카드에만 적용 */
+.history-card-block {
+  flex-grow: 1; /* Allow this card to grow and fill the space */
+  min-height: 0; /* Crucial for allowing flex children to shrink and scroll */
+  display: flex;
+  flex-direction: column;
 }
 
 .card-title-row {
@@ -97,8 +106,8 @@
 
 /* 표 */
 .table-wrap {
-  overflow: auto;
-  max-height: 520px;
+  overflow: auto; /* This will now create a scrollbar inside the history card */
+  flex-grow: 1; /* Make the table wrap fill the available space in the history card */
   border-radius: 12px;
   border: 1px solid #e5e7eb;
 }

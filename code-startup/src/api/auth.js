@@ -1,8 +1,10 @@
 // src/api/auth.js
-import { http, tokenStore } from "./http";
+import axios from "axios";
+import { http, tokenStore, ensureAccessToken } from "./http";
 import { mockSignup, mockLogin, mockMe } from "../mocks/mockAuth";
 
 const { USE_MOCK, setTokens, getAccess } = tokenStore;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 /** 회원가입 */
 export async function signUp(payload) {
@@ -58,6 +60,24 @@ export async function fetchMe() {
   const res = await http.get("/api/users/me");
   return res.data;
 }
+
+/**
+ * 로그아웃: 서버에 알리고 로컬 토큰도 모두 제거
+ */
+export async function logout() {
+  try {
+    // 백엔드에서 /api/auth/logout이 permitAll()로 설정되었으므로,
+    // Access Token은 필요 없으며, http 인스턴스의 withCredentials: true 설정으로
+    // Refresh Token 쿠키만 자동으로 전송되면 됨.
+    await http.post("/api/auth/logout", {});
+  } catch (e) {
+    console.warn("Logout API call failed, proceeding with local logout.", e);
+  } finally {
+    // API 호출 성공 여부와 관계없이 로컬 토큰 정리
+    logoutLocal();
+  }
+}
+
 
 /** 로컬 로그아웃(스토리지 초기화) */
 export function logoutLocal() {

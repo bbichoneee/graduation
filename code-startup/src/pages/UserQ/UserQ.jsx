@@ -86,8 +86,8 @@ export default function UserQ() {
   };
 
   const goSolveDaily = () => {
-    if (!daily) return;
-    navigate(`/solveq/${daily.orderNum}`);
+    if (!daily?.currentProblem) return;
+    navigate(`/solveq/${daily.currentProblem.orderNum}`);
   };
 
   const goToQbankWeakestType = () => {
@@ -134,8 +134,8 @@ export default function UserQ() {
             <>
               <div className="rights-head">
                 <div className="rights-timer">
-                  {daily && daily.remainingAttempts !== undefined && (
-                    <span className="remaining-attempts">남은 기회: {daily.remainingAttempts}번</span>
+                  {daily?.currentProblem && daily.currentProblem.remainingAttempts !== undefined && (
+                    <span className="remaining-attempts">남은 기회: {daily.currentProblem.remainingAttempts}번</span>
                   )}
                   <span className="remaining-time">문제 초기화까지 남은 시간 : {remain}</span>
                 </div>
@@ -147,25 +147,59 @@ export default function UserQ() {
                   <div className="daily-loading">불러오기 실패: {String(errorDaily.message || errorDaily)}</div>
                 )}
                 {!loadingDaily && !errorDaily && daily && (
-                  daily.remainingAttempts <= 0 ? (
-                    <div className="daily-attempts-exhausted-message">
-                      <p>모든 기회를 다 썼습니다!</p>
-                      <p>다음날 다시 도전하세요!</p>
-                    </div>
-                  ) : (
-                    <div
-                      className="daily-card"
-                      role="button"
-                      tabIndex={0}
-                      onClick={goSolveDaily}
-                      onKeyDown={(e) => (e.key === "Enter" ? goSolveDaily() : null)}
-                    >
-                      <div className="daily-meta">
-                        <span className="daily-id">#{daily.orderNum}</span>
-                        <span className="daily-level">Lv.{daily.level ?? "?"}</span>
+                  // Check if there is a current problem to display
+                  daily.currentProblem ? (
+                    daily.currentProblem.remainingAttempts <= 0 ? (
+                      <div className="daily-attempts-exhausted-message">
+                        <p>모든 기회를 다 썼습니다!</p>
+                        <p>다음날 다시 도전하세요!</p>
                       </div>
-                      <div className="daily-title">{daily.title}</div>
-                      <div className="daily-cta">바로 풀러 가기 →</div>
+                    ) : (
+                      <div className="daily-stack-container">
+                        {/* Previous Problem */}
+                        {daily.prevProblem && (
+                          <div className="daily-card daily-card--previous">
+                            <div className="daily-meta">
+                              <span className="daily-id">#{daily.prevProblem.orderNum}</span>
+                              <span className="daily-level">Lv.{daily.prevProblem.level ?? "?"}</span>
+                            </div>
+                            <div className="daily-title">{daily.prevProblem.title}</div>
+                          </div>
+                        )}
+
+                        {/* Current Problem */}
+                        <div
+                          className="daily-card daily-card--current"
+                          role="button"
+                          tabIndex={0}
+                          onClick={goSolveDaily}
+                          onKeyDown={(e) => (e.key === "Enter" ? goSolveDaily() : null)}
+                        >
+                          <div className="daily-meta">
+                            <span className="daily-id">#{daily.currentProblem.orderNum}</span>
+                            <span className="daily-level">Lv.{daily.currentProblem.level ?? "?"}</span>
+                          </div>
+                          <div className="daily-title">{daily.currentProblem.title}</div>
+                          <div className="daily-cta">바로 풀러 가기 →</div>
+                        </div>
+
+                        {/* Next Problem */}
+                        {daily.nextProblem && (
+                          <div className="daily-card daily-card--next">
+                            <div className="daily-meta">
+                              <span className="daily-id">#{daily.nextProblem.orderNum}</span>
+                              <span className="daily-level">Lv.{daily.nextProblem.level ?? "?"}</span>
+                            </div>
+                            <div className="daily-title">{daily.nextProblem.title}</div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  ) : (
+                    // Render a message if there is no daily problem
+                    <div className="daily-loading">
+                      <p>오늘의 데일리 문제가 없습니다.</p>
+                      <p>내일 다시 확인해주세요!</p>
                     </div>
                   )
                 )}
